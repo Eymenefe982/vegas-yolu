@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vegas",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [".claude/nocache_server.py", "8766"],
+      "port": 8766
+    }
+  ]
+}

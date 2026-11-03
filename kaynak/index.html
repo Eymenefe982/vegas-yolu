@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="ikon.png">
+<style>body{margin:0}img{max-width:100%}</style>
+<title>Vegas Yolu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=Limelight&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/stil.css">
+
+</head>
+<body>
+<div id="app">
+
+<section id="scr-menu" class="screen">
+  <div class="wrap menu">
+    <div class="hero">
+      <div class="marquee">
+        <span class="kicker">Texas Hold'em · No-Limit</span>
+        <h1 class="logo">Vegas Yolu</h1>
+        <p class="tag">Tarlabaşı'ndaki bir bodrum katından Las Vegas'ın tepesindeki milyon dolarlık süite uzanan bir poker kariyeri.</p>
+      </div>
+      <ol class="route" id="route" aria-label="Kariyer yolu"></ol>
+    </div>
+    <div class="choices">
+      <button class="choice learn-c" id="go-learn">
+        <span class="ch-k">Eğitim</span>
+        <span class="ch-t">Pokeri sıfırdan öğren</span>
+        <span class="ch-d">Dokuz ders: kurallar, el sıralaması, pozisyon, olasılık, blöf ve beden dili. Olasılık ve öneri veren koç yalnızca alıştırma masalarında.</span>
+        <span class="ch-cta" id="learn-cta">Derslere başla →</span>
+      </button>
+      <button class="choice play-c" id="go-career">
+        <span class="ch-k">Oyun Modu</span>
+        <span class="ch-t">Kariyerine başla</span>
+        <span class="ch-d">On salon, on zorluk: kaçak kumarhaneden milyon dolarlık süite. Poker masalarının yanında batak, rulet, blackjack ve bakara. İçeri yürü, rakiplerini gözünle oku. Burada koç yok.</span>
+        <span class="ch-cta" id="career-cta">Masaları gör →</span>
+      </button>
+    </div>
+    <div class="menu-foot">
+      <div class="stats" id="stats"></div>
+      <div class="foot-btns"><button class="btn ghost small" id="open-acct" hidden>Google ile giriş</button><button class="btn ghost small" id="open-ach">Başarımlar</button><button class="btn ghost small" id="open-settings">Ayarlar</button></div>
+    </div>
+    <p class="fine">Bu oyunda gerçek para yoktur; tüm fişler sanaldır.</p>
+  </div>
+</section>
+
+<section id="scr-career" class="screen" hidden>
+  <div class="wrap">
+    <div class="topbar">
+      <button class="btn ghost small" data-go="scr-menu">← Ana menü</button>
+      <h2 class="h-display">Kariyer</h2>
+      <span class="muted" id="career-sum"></span>
+    </div>
+    <p class="lead">Masalar kolaydan zora dizildi. Cebindeki parayla başlarsın: giriş ücretini ödeyebildiğin masaya oturursun, kalkınca fişlerin nakde döner. Hedef fişe ulaşır ya da bütün rakipleri kaldırırsan masayı fethedersin; fethettiğin masada adın duyulur, oturduğunda seni tanırlar. Kariyerde koç yok: olasılığı kafandan hesaplar, rakiplerini kıyafetinden, servetinden ve davranışından okursun. Üst masalarda oyuncular kendini daha az belli eder.</p>
+    <div class="venues" id="venues"></div>
+  </div>
+</section>
+
+<section id="scr-learn" class="screen" hidden>
+  <div class="wrap">
+    <div class="topbar">
+      <button class="btn ghost small" data-go="scr-menu">← Ana menü</button>
+      <h2 class="h-display">Eğitim</h2>
+      <span class="muted" id="learn-sum"></span>
+    </div>
+    <div class="learn">
+      <nav class="lnav" id="lnav" aria-label="Dersler"></nav>
+      <article class="lesson" id="lesson"></article>
+    </div>
+  </div>
+</section>
+
+<section id="scr-game" class="screen game" hidden>
+  <header class="g-top">
+    <button class="btn ghost small" id="g-leave">← Kalk</button>
+    <div class="g-title"><b id="g-vname"></b><span id="g-vinfo"></span></div>
+    <div class="g-goal" id="g-goal"><span id="g-goal-txt"></span><span class="goalbar"><i id="g-goal-bar"></i></span></div>
+    <button class="icon-btn" id="g-sound" aria-pressed="true" aria-label="Ses" title="Sesi aç/kapat"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <button class="icon-btn" id="g-settings" aria-label="Ayarlar" title="Ayarlar (parlaklık, grafik, görünüm)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </header>
+  <div class="g-main">
+    <div class="table-area">
+      <div class="table" id="table">
+        <div class="felt"><span class="felt-name" id="felt-name"></span></div>
+        <div class="center">
+          <div class="pot" id="pot"></div>
+          <div class="board" id="board"></div>
+          <div class="banner" id="banner" hidden></div>
+        </div>
+        <span class="dbtn" id="dbtn" title="Dealer butonu">D</span>
+      </div>
+      <div class="v3" id="v3">
+        <div class="v3-labels"></div>
+        <div class="v3-board" id="v3-board" aria-label="Ortadaki kartlar ve pot"></div>
+        <div class="v3-me" id="v3-me" aria-live="polite"></div>
+        <div class="v3-fade" aria-hidden="true"></div>
+        <div class="v3-title" aria-hidden="true"></div>
+        <div class="v3-intro">Masaya yürüyorsun · <b class="h-mouse">geçmek için tıkla</b><b class="h-touch">geçmek için dokun</b></div>
+        <div class="v3-help"><span class="h-mouse">Sürükle ya da A/D: etrafına bak</span><span class="h-mouse">Tekerlek: yakınlaş</span><span class="h-mouse">Oyuncuya tıkla: odaklan</span><span class="h-mouse">V: sıfırla</span><span class="h-touch">Kaydır: etrafına bak</span><span class="h-touch">İki parmak: yakınlaş</span><span class="h-touch">Oyuncuya dokun: odaklan</span></div>
+      </div>
+      <div class="emotes" id="emotes">
+        <div class="emote-list" id="emote-list" hidden>
+          <button type="button" data-e="nice">Güzel el!</button><button type="button" data-e="go">Hadi bakalım.</button><button type="button" data-e="lucky">Şanslısın.</button><button type="button" data-e="bluff">Blöf mü?</button>
+        </div>
+        <button type="button" class="emote-btn" id="emote-open" aria-expanded="false" title="Masada konuş"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 5h16v11H11l-5 4v-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Konuş</button>
+      </div>
+      <div class="say-me" id="say-me" hidden></div>
+    </div>
+    <aside class="g-side">
+      <section class="panel" id="coach">
+        <div class="p-head"><span>Koç</span><label class="switch"><input type="checkbox" id="coach-toggle"><span aria-hidden="true"></span><em id="coach-state">Açık</em></label></div>
+        <div id="coach-narr" class="narr" hidden></div>
+        <div id="coach-body" class="coach-body"></div>
+      </section>
+      <section class="panel" id="notes">
+        <div class="p-head"><span>Gözlemler</span><em class="n-tip" id="notes-tip"></em></div>
+        <ol id="notes-list" class="notes-list"></ol>
+      </section>
+      <details class="panel" id="log-wrap">
+        <summary class="p-head">El geçmişi</summary>
+        <ol id="log-list" class="log-list"></ol>
+      </details>
+    </aside>
+  </div>
+  <footer class="actions" id="actions">
+    <div class="a-status" id="a-status"></div>
+    <div class="a-human" id="a-human" hidden>
+      <div class="a-raise" id="a-raise-box">
+        <div class="presets" id="presets">
+          <button data-p="min">Min</button><button data-p="half">½ Pot</button><button data-p="tq">¾ Pot</button><button data-p="pot">Pot</button><button data-p="all">All-in</button>
+        </div>
+        <div class="slider"><input type="range" id="a-amt" aria-label="Bahis miktarı"><output id="a-amt-out" for="a-amt"></output></div>
+      </div>
+      <div class="a-btns">
+        <button class="act fold" id="a-fold">Çekil <kbd>F</kbd></button>
+        <button class="act call" id="a-call">Kontrol <kbd>C</kbd></button>
+        <button class="act raise" id="a-raise">Artır <kbd>R</kbd></button>
+      </div>
+    </div>
+    <button class="btn" id="a-next" hidden>Sonraki el <kbd>Enter</kbd></button>
+  </footer>
+</section>
+
+<section id="scr-hall" class="screen hallscr" hidden>
+  <header class="g-top c-top">
+    <button class="btn ghost small" id="h-leave">← Kariyer</button>
+    <div class="g-title"><b id="h-name"></b><span id="h-info"></span></div>
+    <div class="c-chips"><span class="kicker">Cüzdan</span><b id="h-cash"></b></div>
+  </header>
+  <div class="v3 v3x hall3" id="hall3"><div class="v3-labels"></div><div class="v3-fade"></div><div class="v3-title"></div><div class="v3-intro">Salona giriyorsun · <b class="h-mouse">geçmek için tıkla</b><b class="h-touch">geçmek için dokun</b></div><div class="v3-help"><span class="h-mouse">Sürükle ya da A/D: etrafına bak</span><span class="h-mouse">Masaya tıkla: git ve otur</span><span class="h-touch">Kaydır: etrafına bak</span><span class="h-touch">Masaya dokun: git ve otur</span></div></div>
+  <p class="c-msg">Oturmak istediğin masaya tıkla ya da aşağıdan seç. Giriş ücreti oturunca cüzdandan düşer.</p>
+  <div class="hall-list" id="hall-list"></div>
+</section>
+
+<section id="scr-casino" class="screen casino" hidden>
+  <header class="g-top c-top">
+    <button class="btn ghost small" id="c-leave">← Kalk</button>
+    <div class="g-title"><b id="c-name"></b><span id="c-info"></span></div>
+    <div class="c-chips"><span class="kicker" id="c-chips-k">Fişin</span><b id="c-chips"></b></div>
+    <div class="g-goal"><span id="c-goal-txt"></span><span class="goalbar"><i id="c-goal-bar"></i></span></div>
+  </header>
+  <div class="c-felt" id="c-felt"></div>
+  <div class="c-extra" id="c-extra"></div>
+  <p class="c-msg" id="c-msg" aria-live="polite"></p>
+  <div class="c-ctrl" id="c-ctrl"></div>
+</section>
+
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<div class="modal" id="modal" hidden><div class="sheet" role="dialog" aria-modal="true" id="sheet"></div></div>
+
+<script src="lib/three.min.js"></script>
+<script src="js/ek.js"></script>
+<script src="js/sahne.js"></script>
+<script src="js/oyun.js"></script>
+<script src="js/oyunlar.js"></script>
+<script src="js/firebase-ayar.js"></script>
+<script src="js/bulut.js"></script>
+
+</body>
+</html>

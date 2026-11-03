@@ -1,0 +1,13 @@
+# Derlenmiş sürümler (derle.bat / derle-apk.bat ile yeniden üretilir)
+*.exe
+*.apk
+# İmza anahtarı: herkese açık depoya konmaz
+*.keystore
+# Yanlışlıkla oluşmuş boş dosyalar
+kaynak/({th
+kaynak/0
+kaynak/2
+kaynak/root.add(h))
+kaynak/span{font-size
+kaynak/Talk.event(p
+kaynak/{const
