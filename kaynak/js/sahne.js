@@ -170,7 +170,13 @@ function ik(S,H,L1,L2,pole,E){
 function makeHand(sk,side){
   const g=new T.Group();
   const palm=mesh(box(.07,.024,.08),sk);palm.position.set(0,0,.04);g.add(palm);
-  const f=mesh(box(.066,.018,.055),sk);f.position.set(0,-.007,.098);f.rotation.x=.38;g.add(f);
+  // dört parmak, her biri iki boğum: işaret ve yüzük parmağı biraz kısa, orta uzun, serçe en kısa
+  const fl=[.05,.056,.052,.042];
+  for(let i=0;i<4;i++){
+    const x=(i-1.5)*.0165*side,L=fl[i];
+    const a=mesh(box(.0145,.0145,L),sk);a.position.set(x,-.006,.08+L/2);a.rotation.x=.3;g.add(a);
+    const b=mesh(box(.0135,.0135,L*.7),sk);b.position.set(x,-.015-L*.1,.08+L*.95);b.rotation.x=.7;g.add(b);
+  }
   const th=mesh(box(.021,.02,.05),sk);th.position.set(side*.04,-.004,.03);th.rotation.y=-side*.55;g.add(th);
   return g;
 }
@@ -307,6 +313,19 @@ const STYLE_FX={
 
 /* ---------- karakter çeşitliliği: yüz yapısı, ten detayı, kumaş deseni, mekâna göre görünüm ---------- */
 // Her karakter kendi özelliklerinden türeyen sabit bir tohum kullanır: aynı kişi her seferinde aynı yüzle gelir.
+// Kumaş dokusu: dokuma, örgü ve deri için hafif kabartma haritaları (bir kez üretilir, paylaşılır)
+const FAB={};
+function fabric(kind){
+  const k=['leather'].includes(kind)?'leather':['cardigan','hoodie','sweater','turtleneck'].includes(kind)?'knit':'weave';
+  if(FAB[k])return FAB[k];
+  FAB[k]=ctex(64,64,(x,w,h)=>{
+    x.fillStyle='#808080';x.fillRect(0,0,w,h);
+    if(k==='weave'){for(let i=0;i<w;i+=2){x.fillStyle=i%4?'#9a9a9a':'#6a6a6a';x.fillRect(i,0,1,h);}for(let j=0;j<h;j+=2){x.fillStyle=j%4?'rgba(255,255,255,.16)':'rgba(0,0,0,.16)';x.fillRect(0,j,w,1);}}
+    else if(k==='knit'){for(let j=0;j<h;j+=4)for(let i=0;i<w;i+=4){x.fillStyle=((i+j)/4)%2?'#b0b0b0':'#5a5a5a';x.fillRect(i,j,3,3);}}
+    else{speckle(x,w,h,900,.5,2);blot(x,w,h,40,'rgba(255,255,255,.12)',3,8);blot(x,w,h,40,'rgba(0,0,0,.18)',3,8);}
+  },{srgb:false,rep:k==='knit'?[10,6]:k==='leather'?[5,3]:[14,8],keep:true});
+  return FAB[k];
+}
 function seedOf(d){const s=[d.sex,d.age,d.skin,(d.hair||[]).join(),(d.top||[]).join(),(d.face||[]).join()].join('|');let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 function rngOf(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 // -1: yıpranmış mekân (kaçak, kıraathane), 0: sıradan, 1: gösterişli (kumarhaneler)
@@ -360,6 +379,7 @@ function makePerson(d,opt){
   const [kind,c1,c2]=d.top||['shirt','#dddddd'];
   const fr=tier>0?.64:tier<0?.95:.86;
   const topM=kind==='hawaii'?tmat(hawaiiTex(c1),{roughness:.8}):(d.top&&d.top[3])?tmat(patTex(d.top[3],c1),{roughness:fr}):mat(tier<0?shade(c1,.9):c1,kind==='leather'?{roughness:.3,metalness:.15}:kind==='tux'?{roughness:tier>0?.34:.5}:{roughness:fr});
+  if(kind!=='hawaii'&&!topM.bumpMap){topM.bumpMap=fabric(kind);topM.bumpScale=kind==='leather'?1.4:.7;topM.needsUpdate=true;}
   const innerM=mat(c2||'#ece8df',{roughness:.7});
   const pantsM=mat(d.pants||(kind==='dress'?shade(c1,.9):'#25252b'),{roughness:.85});
   let upM=topM,foM=topM;
@@ -372,6 +392,9 @@ function makePerson(d,opt){
   const tr=.15*bw*(fem?.86:1);
   const torso=mesh(geo('cap'+tr,()=>new T.CapsuleGeometry(tr,.24,6,14)),topM);torso.position.y=.27;torso.scale.z=.72;spine.add(torso);P.torso=torso;
   const fz=tr*.72;
+  // geniş üst göğüs ve boyundan omuza inen trapez kasları: gövde silindir gibi durmasın
+  {const ch=mesh(sph(tr*1.02,16,10),topM);ch.scale.set(fem?1.04:1.14,.58,.74);ch.position.set(0,.37,.0);spine.add(ch);
+   for(const s of[-1,1]){const tz=mesh(sph(.06*bw,10,8),kind==='dress'?skin:topM);tz.scale.set(1.5,.5,.9);tz.position.set(s*.07*bw,.5,-.012);tz.rotation.z=-s*.35;spine.add(tz);}}
   if(d.belly){const b=mesh(sph(.15*bw,16,12),topM);b.scale.set(1,.85,.95);b.position.set(0,.13,.05);spine.add(b);}
   const sw=.18*bw*(fem?.84:1);
   P.sh=[new T.Object3D(),new T.Object3D()];P.sh[0].position.set(sw,.44,0);P.sh[1].position.set(-sw,.44,0);
@@ -407,12 +430,18 @@ function makePerson(d,opt){
   P.fo=[0,1].map(()=>mk(cyl(.033*bw,.04*bw,1,10),foM));
   P.el=[0,1].map(()=>mk(sph(.042*bw,10,8),upM));
   P.hand=[makeHand(skin,-1),makeHand(skin,1)];P.hand.forEach(h=>root.add(h));
+  // manşet: uzun kollu giysilerde bileğin etrafında halka; ceketlerin altından gömlek manşeti görünür
+  if(foM!==skin){const cj=['jacket','suit','blazer','tux'].includes(kind);for(const h of P.hand){const cf=mesh(torus(.037*bw,.0085,TAU,6,16),cj?innerM:foM,false);cf.position.z=-.012;h.add(cf);if(cj){const bt=mesh(sph(.0045,6,4),GOLD(),false);bt.position.set(.03*bw,0,-.012);h.add(bt);}}}
   const acc=d.acc||[];
   if(acc.includes('bracelet'))for(const h of P.hand){const b=mesh(torus(.036*bw,.0042,TAU,6,16),GOLD(),false);b.position.z=-.006;h.add(b);}
   if(acc.includes('watch'))P.watch=mk(cyl(.038*bw,.038*bw,.022,14),mat(R()<.5?'#c9a24a':'#bfc3c7',{metalness:.85,roughness:.25}));
   if(acc.includes('rings'))for(const h of P.hand){const r=mesh(torus(.011,.003,TAU,5,10),GOLD(),false);r.position.set(.015,0,.11);r.rotation.x=PI/2;h.add(r);}
   const shoe=mat(d.shoes||'#141210',{roughness:.45});
-  P.leg=[0,1].map(()=>({th:mk(cyl(.058*bw,.068*bw,1,10),pantsM),sh:mk(cyl(.043,.05,1,10),pantsM),kn:mk(sph(.056*bw,10,8),pantsM),ft:mk(box(.085,.06,.2),shoe)}));
+  P.leg=[0,1].map(()=>{const L={th:mk(cyl(.058*bw,.068*bw,1,10),pantsM),sh:mk(cyl(.043,.05,1,10),pantsM),kn:mk(sph(.056*bw,10,8),pantsM),ft:mk(box(.085,.06,.2),shoe)};
+    const toe=mesh(sph(.044,10,8),shoe,false);toe.scale.set(1,.7,1);toe.position.set(0,-.004,.085);L.ft.add(toe);
+    const sole=mesh(box(.088,.012,.206),mat('#0a0908',{roughness:.7}),false);sole.position.y=-.03;L.ft.add(sole);
+    const cuff=mesh(cyl(.047,.047,.02,10),pantsM,false);cuff.position.set(0,.04,-.04);L.ft.add(cuff);
+    return L;});
   const props=d.props||[];
   if(props.includes('tespih')){
     const n=33,im=new T.InstancedMesh(sph(.0055,6,5),mat('#6b2a1a',{roughness:.35}),n);im.castShadow=true;P.hand[1].add(im);P.tespih={im,n,ph:0};
@@ -470,7 +499,7 @@ function makePerson(d,opt){
     P.hw[0]=P.hw[1]=(s.spd||6)*1.6;
     if(s.fn)try{s.fn();}catch(e){}
   };
-  P.reset=()=>{P.drop();P.hk=[...P.baseHand];P.look=P.baseLook;P.leanT=P.leanBase();P.smileT=P.baseSmile;P.browT=0;P.shrugT=0;P.breathT=1;P.peekT=0;P.nodT=0;P.rub=0;P.riffle=0;P.shake=0;P.openT=0;P.laugh=0;P.shakeA=.22;P.shakeF=10;P.gest=0;P.wipe=0;P.squintT=0;P.brow1T=0;P.smirkT=0;P.roll=0;P.prio=0;P.hw=[8,8];P.hold[0]=null;P.seqName=null;};
+  P.reset=()=>{P.drop();P.hk=[...P.baseHand];P.look=P.baseLook;P.leanT=P.leanBase();P.smileT=P.baseSmile;P.browT=0;P.shrugT=0;P.breathT=1;P.peekT=0;P.nodT=0;P.rub=0;P.riffle=0;P.shake=0;P.openT=0;P.laugh=0;P.shakeA=.22;P.shakeF=10;P.gest=0;P.wipe=0;P.squintT=0;P.brow1T=0;P.smirkT=0;P.roll=0;if(P.standT===1)P.standT=0;P.prio=0;P.hw=[8,8];P.hold[0]=null;P.seqName=null;};
   P.init=()=>{root.updateMatrixWorld(true);for(let s=0;s<2;s++){P.hc[s].copy(P.handPt(P.hk[s],s));P.hv[s].set(0,0,0);}P.lean=P.leanT=P.leanBase();};
   P.headW=v=>P.head.getWorldPosition(v);
   P.handW=(out,which)=>{if(which==='both'){P.hand[0].getWorldPosition(out);P.hand[1].getWorldPosition(_t2);return out.add(_t2).multiplyScalar(.5);}return P.hand[which===0?0:1].getWorldPosition(out);};
@@ -641,7 +670,7 @@ function makePerson(d,opt){
       case 'check':return P.play([{t:.25,R:'tapUp',look:'board',spd:9},{t:.11,R:'tapDown',spd:22},{t:.12,R:'tapUp',spd:20},{t:.11,R:'tapDown',spd:22},{t:.45,R:bh[1],spd:6}],4);
       case 'fold':return P.play([{t:.3,R:'cards',look:'cards',lean:.18,spd:9},{t:.32,R:'muck',spd:11,grab:1},{t:.05,release:1},{t:.6,R:bh[1],lean:-.04,spd:5}],4,'fold');
       case 'win':{const st=[{t:.55,L:'potL',R:'pot',lean:.32,look:'pot',smile:cl(.25+.5*e,0,1),spd:6},{t:.85,L:'chipsL',R:'chips',look:'chips',grab:1,spd:4.5},{t:.1,release:1}];
-        const cel=o.big&&e>.6&&R()<.85?({manyak:'tableSlap',gevsek:'armsUp',kopekbaligi:'smirk',tilki:'smirk',kaya:'chuckle'})[opt.style]:null;
+        const cel=o.big&&e>.6&&R()<.85?({manyak:R()<.5?'standCheer':'tableSlap',gevsek:R()<.4?'standCheer':'armsUp',kopekbaligi:'smirk',tilki:'smirk',kaya:'chuckle'})[opt.style]:null;
         if(cel)st.push({t:.05,fn:()=>{P.prio=0;P.act(cel);}});   // tarzına göre kutlama: coşkulu, kurnaz ya da sakin
         else if(o.big&&e>.6)st.push({t:.45,L:bh[0],R:'fistUp',lean:-.05,look:'human',smile:1,brow:.5,spd:11},{t:.7,smile:1},{t:.5,R:bh[1],lean:P.leanBase(),smile:P.baseSmile,spd:6});
         else st.push({t:1.6,L:bh[0],R:bh[1],lean:-.05,smile:cl(.15+.55*(e-.5),0,1),look:e>1?'human':'board'});
@@ -703,6 +732,7 @@ function makePerson(d,opt){
       case 'lipBite':return P.play([{t:.35,smile:-.25,open:.12,look:'away',spd:6},{t:.9,smile:-.4,open:.05},{t:.4,smile:P.baseSmile,open:0}],2);
       // büyük kazanç ve kayıp sahneleri
       case 'armsUp':case 'cheer':return P.play([{t:.45,L:'fistUp',R:'fistUp',lean:-.12,smile:1,open:.5,brow:.6,look:'human',spd:12},{t:1.1,laugh:1,smile:1,open:.5},{t:.6,L:bh[0],R:bh[1],laugh:0,open:0,brow:0,smile:P.baseSmile,lean:P.leanBase(),spd:6}],4);
+      case 'standCheer':return P.play([{t:.7,L:'fistUp',R:'fistUp',lean:-.05,smile:1,open:.5,brow:.6,look:'human',spd:10,fn:()=>{P.standT=1;}},{t:1.5,laugh:1,smile:1,open:.5},{t:.8,L:bh[0],R:bh[1],laugh:0,open:0,brow:0,smile:P.baseSmile,spd:6,fn:()=>{P.standT=0;}}],4);
       case 'tableSlap':return P.play([{t:.3,R:'slamUp',smile:1,open:.5,brow:.5,spd:10},{t:.12,R:'slamDown',spd:32,fn:()=>{try{SFX.play('check');}catch(x){}}},{t:1.3,laugh:1,smile:1,open:.4,R:bh[1],look:'human',spd:5},{t:.4,laugh:0,open:0,brow:0,smile:P.baseSmile}],4);
       case 'chestPound':return P.play([{t:.5,R:'chest',lean:-.1,smile:.8,look:'human',brow:.3,spd:8},{t:1,rub:1},{t:.5,R:bh[1],rub:0,brow:0,smile:P.baseSmile,lean:P.leanBase(),spd:6}],4);
       case 'handsOnHead':return P.play([{t:.7,L:'behindHead',R:'behindHead',lean:-.18,look:'away',open:.3,brow:.6,spd:7},{t:2.2,breath:2.4},{t:.8,L:bh[0],R:bh[1],lean:P.leanBase(),open:0,brow:0,breath:1,spd:5}],4);
@@ -731,6 +761,9 @@ function makePerson(d,opt){
     }
     if(P.seq){P.seqT+=dt;const s=P.seq[P.si];if(P.seqT>=s.t){P.si++;P.seqT=0;if(P.si>=P.seq.length){P.seq=null;P.reset();}else P.apply(P.seq[P.si]);}}
     if(!P.seq)P.idle(t);
+    // oturma ve kalkma: masaya varınca oturur, büyük kazançta ayağa kalkabilir
+    if(P.sitAt!==undefined&&t>=P.sitAt){P.sitAt=undefined;P.standT=0;if(R()<.6){try{SFX.play('chair');}catch(e){}}}
+    if(P.standT!==undefined&&!P.leaving){P.stand=damp(P.stand,P.standT,3.2,dt);if(P.standT===0&&P.stand<.01){P.stand=0;P.standT=undefined;}}
     const frz=t<P.freezeUntil?1:0,fid=P.fid*(1-frz*.92);
     let r=spring(P.lean,P.vlean,P.leanT,P.standing?3:3.4,dt);P.lean=r[0];P.vlean=r[1];
     r=spring(P.shrug,P.vshrug,P.shrugT,9,dt);P.shrug=r[0];P.vshrug=r[1];
@@ -866,13 +899,56 @@ function addNPC(d,o){
   P.npcLean=o.lean||0;
   P.baseLook=o.look?(o.look.isVector3?{k:'w',v:o.look.clone()}:o.look):{k:'w',v:V3(0,1.1,0)};
   P.reset();P.init();
-  if(o.tray){const tr=new T.Group();tr.add(mesh(cyl(.17,.17,.012,22),mat('#c9c9c9',{metalness:.8,roughness:.3}),false));for(let i=0;i<2;i++){const g=makeProp(o.tray);g.position.set(-.05+i*.09,.006,i?.04:-.03);tr.add(g);}W.scene.add(tr);P.trayObj=tr;}
+  if(o.tray){const tr=new T.Group();tr.add(mesh(cyl(.17,.17,.012,22),mat('#c9c9c9',{metalness:.8,roughness:.3}),false));for(let i=0;i<2;i++){const g=makeProp(o.tray);g.position.set(-.05+i*.09,.006,i?.04:-.03);tr.add(g);}W.scene.add(tr);P.trayObj=tr;P.trayKind=o.tray;}
   if(o.path){P.path=o.path;P.pathLen=o.path.getLength();P.pathU=R();P.speed=o.speed||.62;P.walk=1;}
   P.npcIdle=o.idle||(()=>{const r=R();if(r<.55)P.play([{t:2+R()*3,look:'base'}],1);else if(r<.8)P.play([{t:1.5+R()*2,look:'away'}],1);else P.play([{t:1.6,look:{k:'w',v:V3(0,1.1,0)}}],1);});
   W.npcs.push(P);return P;
 }
+// Garson servisi: arada bir yürüyüş rotasından çıkıp bir oyuncunun yanına gider, içeceği masaya bırakır, rotasına döner.
+function serveTick(P,dt,t){
+  if(!P.trayObj||!P.trayKind||P.leaving||!W.seats)return false;
+  P.cups=(P.cups||[]).filter(c=>{if(t>c.until){W.scene.remove(c.g);return false;}return true;});
+  if(!P.sv){
+    if(P.svNext===undefined)P.svNext=t+14+R()*16;
+    if(t<P.svNext)return false;
+    const c=W.seats.filter((S,i)=>i>0&&S&&S.person&&S.person.root.visible&&!(S.p&&S.p.out));
+    if(!c.length){P.svNext=t+15;return false;}
+    const S=pick1(c),pp=S.person.root.position,r=Math.hypot(pp.x,pp.z)||1;
+    const ox=pp.x/r,oz=pp.z/r;
+    P.sv={ph:'go',S,tg:V3(pp.x+ox*.95-oz*.55,0,pp.z+oz*.95+ox*.55),wait:0};
+  }
+  const sv=P.sv,pos=P.root.position;
+  if(sv.ph==='go'||sv.ph==='back'){
+    const tg=sv.ph==='go'?sv.tg:sv.home;_t.set(tg.x-pos.x,0,tg.z-pos.z);const d=_t.length();
+    if(d<.12){
+      if(sv.ph==='go'){sv.ph='serve';sv.wait=0;}
+      else{P.sv=null;P.pathU=sv.u;P.svNext=t+30+R()*35;return false;}
+    }else{
+      _t.multiplyScalar(1/d);const st=Math.min((P.speed||.62)*1.1*dt,d);pos.x+=_t.x*st;pos.z+=_t.z*st;
+      let dy=Math.atan2(_t.x,_t.z)-P.root.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));P.root.rotation.y+=dy*Math.min(1,dt*6);
+      P.walk=1;P.walkPh+=dt*7.4;return true;
+    }
+  }
+  // servis: oyuncuya dön, içeceği bırak
+  P.walk=0;sv.wait+=dt;
+  const pp=sv.S.person.root.position;let dy=Math.atan2(pp.x-pos.x,pp.z-pos.z)-P.root.rotation.y;dy=Math.atan2(Math.sin(dy),Math.cos(dy));P.root.rotation.y+=dy*Math.min(1,dt*6);
+  if(sv.wait>.3&&!sv.began){sv.began=true;P.play([{t:1.7,look:{k:'np',p:sv.S.person},lean:.1}],2);}
+  if(sv.wait>1&&!sv.did){
+    sv.did=true;
+    const g=makeProp(P.trayKind),S=sv.S;g.position.copy(S.o.localToWorld(V3(.52,TY,.5)));g.rotation.y=S.o.rotation.y;W.scene.add(g);
+    (P.cups=P.cups||[]).push({g,until:t+28});
+    if(!S.person.seq)S.person.act('nod');
+    try{SFX.play('clink');}catch(e){}
+  }
+  if(sv.wait>2){
+    let bu=0,bd=1e9;for(let i=0;i<48;i++){P.path.getPointAt(i/48,_a);const d=Math.hypot(_a.x-pos.x,_a.z-pos.z);if(d<bd){bd=d;bu=i/48;}}
+    P.path.getPointAt(bu,_a);sv.home=V3(_a.x,0,_a.z);sv.u=bu;sv.ph='back';
+  }
+  return true;
+}
 function updNPC(P,dt,t){
-  if(P.path){P.pathU=(P.pathU+dt*P.speed/P.pathLen)%1;P.path.getPointAt(P.pathU,_a);P.root.position.set(_a.x,0,_a.z);P.path.getTangentAt(P.pathU,_b);P.root.rotation.y=Math.atan2(_b.x,_b.z);P.walkPh+=dt*7.4;}
+  let served=false;try{served=serveTick(P,dt,t);}catch(e){P.svNext=1e9;P.sv=null;}
+  if(P.path&&!served){P.pathU=(P.pathU+dt*P.speed/P.pathLen)%1;P.path.getPointAt(P.pathU,_a);P.root.position.set(_a.x,0,_a.z);P.path.getTangentAt(P.pathU,_b);P.root.rotation.y=Math.atan2(_b.x,_b.z);P.walkPh+=dt*7.4;}
   P.update(dt,t);
   if(P.trayObj){P.hand[0].localToWorld(_a.set(0,.03,.07));P.trayObj.position.copy(_a);P.trayObj.rotation.set(0,P.root.rotation.y,0);}
 }
@@ -1495,6 +1571,7 @@ function start(G,el,opt={}){
       const P=makePerson(p.char||{},{idx:i,style:p.style});P.root.position.copy(o.position);P.root.rotation.y=o.rotation.y;W.scene.add(P.root);
       P.stackW=S.stackPos.clone().setY(TY+.03);P.cardsW=L(0,TY,.6);P.betW=S.betPos.clone();P.seat=S;
       attachProps(P,S,p.char||{});P.init();
+      P.stand=1;P.standT=1;P.sitAt=W.t+.5+R()*2;   // salona girerken herkes ayakta; sen yaklaşırken oturur
       S.person=P;W.people[i]=P;
       const lb=document.createElement('div');lb.className='p3';lb.innerHTML='<b class="n"></b><span class="c"></span><em class="a"></em><span class="h"></span><span class="say"></span>';lb.querySelector('.n').textContent=p.name;
       lb.addEventListener('click',()=>{if(cam.focus===i)resetView();else focusOn(i);});

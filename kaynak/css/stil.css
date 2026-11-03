@@ -846,3 +846,105 @@ table.tells th{text-align:left!important}
   .t3{padding:4px 10px 5px} .t3 b{font-size:14px} .t3 span{font-size:10px}
   .c3-pill{font-size:12px;padding:5px 10px}
 }
+
+/* ================= Tema yenilemesi: art-deco kumarhane salonu =================
+   Pirinç ve altın çizgiler, deri panel, keçe dokusu, marquee ampulleri. Mekân renkleri (--accent, --felt) aynen çalışır. */
+:root{
+  --brass-1:#f6dc94;--brass-2:#dcab48;--brass-3:#a8741f;--brass-edge:#7c5516;
+  --gold-line:rgba(221,171,75,.3);--deco:#9a7430;
+  --leather:#1f1711;--leather-2:#150f0a;
+  --noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .09 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+}
+body{
+  background:
+    radial-gradient(1100px 620px at 50% -8%,rgba(255,196,92,.11),transparent 62%),
+    radial-gradient(800px 560px at 100% 100%,rgba(157,29,38,.13),transparent 62%),
+    radial-gradient(800px 560px at 0% 100%,rgba(23,60,42,.2),transparent 62%),
+    repeating-linear-gradient(45deg,rgba(255,255,255,.014) 0 1px,transparent 1px 16px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.014) 0 1px,transparent 1px 16px),
+    var(--room);
+  background-attachment:fixed;
+}
+
+/* Düğmeler: pirinç levha */
+.btn{background:linear-gradient(180deg,var(--brass-1),var(--brass-2) 52%,var(--brass-3));color:#1c1306;border:1px solid var(--brass-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(0,0,0,.25),0 3px 8px rgba(0,0,0,.4);text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.btn:hover:not(:disabled){filter:brightness(1.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(0,0,0,.25),0 3px 14px rgba(221,171,75,.35)}
+.btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));color:var(--text);border:1px solid var(--gold-line);box-shadow:none;text-shadow:none}
+.btn.ghost:hover:not(:disabled){border-color:var(--brass-2);box-shadow:0 0 14px rgba(221,171,75,.18)}
+.icon-btn{border:1px solid var(--gold-line);box-shadow:none;background:rgba(255,255,255,.03)}
+.icon-btn:hover{border-color:var(--brass-2);box-shadow:none}
+
+/* Başlıklar: altın yaldız */
+.h-display,.sheet h3,.lesson h2{background:linear-gradient(180deg,#fff3cc,#e8bd62 58%,#b9822a);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+.logo{filter:drop-shadow(0 4px 0 rgba(0,0,0,.4))}
+.topbar{padding-bottom:14px;border-bottom:1px solid;border-image:linear-gradient(90deg,transparent,var(--deco) 18%,var(--deco) 82%,transparent) 1}
+.kicker{color:#c7ad7c}
+
+/* Paneller: deri + altın iç çerçeve + köşe süsleri */
+.venue,.wallet,.sheet,.panel{background:linear-gradient(180deg,var(--leather),var(--leather-2));border:1px solid var(--gold-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.35);position:relative}
+.venue::before,.wallet::before,.sheet::before,.panel::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--noise);opacity:.55;pointer-events:none;mix-blend-mode:overlay}
+.venue::after,.wallet::after,.sheet::after{content:"";position:absolute;inset:6px;border-radius:12px;pointer-events:none;
+  background:
+    linear-gradient(var(--deco),var(--deco)) top left/16px 1px no-repeat,linear-gradient(var(--deco),var(--deco)) top left/1px 16px no-repeat,
+    linear-gradient(var(--deco),var(--deco)) top right/16px 1px no-repeat,linear-gradient(var(--deco),var(--deco)) top right/1px 16px no-repeat,
+    linear-gradient(var(--deco),var(--deco)) bottom left/16px 1px no-repeat,linear-gradient(var(--deco),var(--deco)) bottom left/1px 16px no-repeat,
+    linear-gradient(var(--deco),var(--deco)) bottom right/16px 1px no-repeat,linear-gradient(var(--deco),var(--deco)) bottom right/1px 16px no-repeat;opacity:.8}
+.sheet{padding:28px}
+.wallet .w-cash{background:linear-gradient(180deg,#fff0bf,#dfb04f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.p-head{color:#c9b184}
+.p-head span:first-child::before{content:"◆";color:var(--deco);margin-right:7px;font-size:8px;vertical-align:2px}
+.venue .sw{background:radial-gradient(ellipse at 50% 40%,var(--felt),var(--felt-2) 80%),var(--noise)}
+
+/* Menü: keçe dokulu seçim kartları */
+.choice::before{content:"";position:absolute;inset:0;background:var(--noise);opacity:.7;mix-blend-mode:overlay;pointer-events:none;border-radius:inherit}
+.choice{box-shadow:0 0 0 10px var(--rail),0 0 0 11px rgba(221,171,75,.22),0 24px 50px rgba(0,0,0,.5)}
+.menu-foot{border-top:1px solid;border-image:linear-gradient(90deg,transparent,var(--deco) 18%,var(--deco) 82%,transparent) 1;align-items:center}
+.stats b{background:linear-gradient(180deg,#fff3cc,#e0b457);-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot-btns{align-items:center}
+
+/* Oyun üst çubuğu ve alt eylem şeridi */
+.g-top{border-bottom:1px solid;border-image:linear-gradient(90deg,transparent,var(--deco) 12%,var(--deco) 88%,transparent) 1;padding-bottom:10px}
+.actions{background:linear-gradient(180deg,#1b130d,#0d0907);border-top:1px solid var(--gold-line);box-shadow:0 -12px 30px rgba(0,0,0,.45)}
+.act{border-radius:999px;box-shadow:inset 0 0 0 3px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.35),0 4px 10px rgba(0,0,0,.4)}
+.act.fold{background:linear-gradient(180deg,#5a1a1d,#33090c);color:#f3d6cf;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 4px 10px rgba(0,0,0,.4)}
+.act.fold:hover:not(:disabled){filter:brightness(1.25);box-shadow:inset 0 0 0 1px var(--bad),0 4px 10px rgba(0,0,0,.4)}
+.act.call{background:linear-gradient(180deg,#fffaf0,#e4d9c0);color:var(--ink)}
+.act.raise{background:linear-gradient(180deg,var(--brass-1),var(--brass-2) 55%,var(--brass-3));color:#1c1306;border:1px solid var(--brass-edge)}
+.presets button{border:1px solid var(--gold-line);box-shadow:none}
+.presets button:hover:not(:disabled){border-color:var(--brass-2);box-shadow:none}
+.p3{background:linear-gradient(180deg,rgba(34,26,18,.82),rgba(12,9,6,.82));box-shadow:0 0 0 1px rgba(221,171,75,.3),0 8px 18px rgba(0,0,0,.4)}
+.p3.turn{box-shadow:0 0 0 2px var(--accent),0 0 22px var(--accent)}
+.s-plate{box-shadow:0 0 0 1px rgba(221,171,75,.25),0 6px 16px rgba(0,0,0,.45)}
+.toast{background:linear-gradient(180deg,#241a12,#14100b);box-shadow:0 0 0 1px var(--brass-2),0 14px 34px rgba(0,0,0,.55)}
+.lnav button[aria-current="true"]{background:linear-gradient(90deg,rgba(221,171,75,.14),transparent);box-shadow:inset 2px 0 0 var(--brass-2)}
+
+/* Ayarlar: seçenek grupları dikey kırılmasın */
+.set-row .seg,.set-row .sw-row{display:inline-flex;flex:none}
+.set-row div.seg.wrap,.set-row .sw-row{flex-wrap:wrap;justify-content:flex-end;max-width:70%}
+.seg{border:1px solid var(--gold-line);box-shadow:none;background:rgba(0,0,0,.25)}
+.seg button[aria-pressed="true"]{background:linear-gradient(180deg,var(--brass-1),var(--brass-2) 60%,var(--brass-3));color:#1c1306}
+.seg.wrap{border-radius:16px}
+.switch input:checked+span{background:linear-gradient(180deg,var(--brass-1),var(--brass-3))}
+
+/* Oyuncu karakteri */
+.s-ava{overflow:hidden}
+.s-ava svg{width:100%;height:100%;display:block}
+.me-ava,.me-chip{display:inline-grid;flex:none;border-radius:50%;overflow:hidden;background:#2a1f16;box-shadow:0 0 0 2px var(--brass-2),0 0 0 4px #1a120b,0 6px 16px rgba(0,0,0,.5)}
+.me-ava{width:60px;height:60px;cursor:pointer;margin-right:6px;transition:transform .2s}
+.me-ava:hover{transform:scale(1.06)}
+.me-chip{width:36px;height:36px;box-shadow:0 0 0 2px var(--brass-2),0 0 0 3px #1a120b}
+.me-ava svg,.me-chip svg{width:100%;height:100%;display:block}
+.menu-foot .me-ava{order:-1}
+.ava-prev{display:grid;place-items:center;padding:6px 0 2px}
+.ava-prev svg{border-radius:50%;box-shadow:0 0 0 3px var(--brass-2),0 0 0 7px #140e09,0 14px 30px rgba(0,0,0,.55)}
+.small-p{font-size:13px;text-align:center}
+.ava-row{align-items:flex-start}
+.sw-row{gap:7px}
+.csw{width:26px;height:26px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.csw[aria-pressed="true"]{box-shadow:0 0 0 2px #1d1510,0 0 0 4px var(--brass-2)}
+@media (max-width:640px){
+  .me-ava{width:48px;height:48px}
+  .set-row{flex-wrap:wrap}
+  .set-row div.seg.wrap,.set-row .sw-row{max-width:100%;justify-content:flex-start}
+  .me-chip{display:none}
+}

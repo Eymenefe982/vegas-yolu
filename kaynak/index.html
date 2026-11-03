@@ -40,8 +40,8 @@
       </button>
     </div>
     <div class="menu-foot">
-      <div class="stats" id="stats"></div>
-      <div class="foot-btns"><button class="btn ghost small" id="open-acct" hidden>Google ile giriş</button><button class="btn ghost small" id="open-ach">Başarımlar</button><button class="btn ghost small" id="open-settings">Ayarlar</button></div>
+      <button class="me-ava" data-ava="60" aria-label="Karakterimi düzenle" title="Karakterim"></button><div class="stats" id="stats"></div>
+      <div class="foot-btns"><button class="btn ghost small" id="open-avatar" onclick="openAvatar()">Karakterim</button><button class="btn ghost small" id="open-acct" hidden>Google ile giriş</button><button class="btn ghost small" id="open-ach">Başarımlar</button><button class="btn ghost small" id="open-settings">Ayarlar</button></div>
     </div>
     <p class="fine">Bu oyunda gerçek para yoktur; tüm fişler sanaldır.</p>
   </div>
@@ -78,6 +78,7 @@
     <button class="btn ghost small" id="g-leave">← Kalk</button>
     <div class="g-title"><b id="g-vname"></b><span id="g-vinfo"></span></div>
     <div class="g-goal" id="g-goal"><span id="g-goal-txt"></span><span class="goalbar"><i id="g-goal-bar"></i></span></div>
+    <span class="me-chip" data-ava="36" title="Sen"></span>
     <button class="icon-btn" id="g-sound" aria-pressed="true" aria-label="Ses" title="Sesi aç/kapat"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <button class="icon-btn" id="g-settings" aria-label="Ayarlar" title="Ayarlar (parlaklık, grafik, görünüm)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
   </header>
@@ -176,6 +177,7 @@
 <script src="lib/three.min.js"></script>
 <script src="js/ek.js"></script>
 <script src="js/sahne.js"></script>
+<script src="js/avatar.js"></script>
 <script src="js/oyun.js"></script>
 <script src="js/oyunlar.js"></script>
 <script src="js/firebase-ayar.js"></script>
