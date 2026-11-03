@@ -251,7 +251,7 @@ const Talk=(()=>{
       if(rep&&(i===0||R()<.5))say(p,pick(rep));
       if(G.v3){
         if(kind==='lucky'&&p.style==='manyak')Sahne.act(p,'shrug');
-        else if(kind==='nice')Sahne.act(p,'nod');
+        else if(kind==='nice')Sahne.act(p,R()<.5?'nod':(p.style==='tilki'||p.style==='gevsek'?'chuckle':'smirk'));
         else if(kind==='bluff'&&(p.style==='tilki'||p.style==='kopekbaligi'))Sahne.act(p,'stare',{dur:2.5});
         else if(kind==='lucky'||kind==='go')Sahne.act(p,R()<.5?'headShake':'attend',{i:0,dur:1.6});
       }
@@ -266,16 +266,19 @@ const Talk=(()=>{
     const others=G.players.filter(q=>!q.human&&!q.out&&q.inHand);
     const h=G.handNo,fire=(q,v,d)=>setTimeout(()=>{if(G&&G.handNo===h&&!q.out)Sahne.act(q,v);},d);
     if(me.won>=G.bb*15){
-      others.forEach(q=>{if(R()<.4*ex(q)){const v=(q.style==='gevsek'||q.style==='tilki')&&R()<.55?'clap':(q.style==='manyak'?'headShake':'nod');fire(q,v,1000+R()*900);}});
+      others.forEach(q=>{if(R()<.4*ex(q)){const v=(q.style==='gevsek'||q.style==='tilki')&&R()<.55?pick(['clap','chuckle']):(q.style==='manyak'?pick(['headShake','jawDrop']):pick(['nod','smirk']));fire(q,v,1000+R()*900);}});
     }else{
       const w=G.players.filter(q=>!q.human&&q.won>=G.bb*15)[0];
-      if(w)others.filter(q=>q!==w).forEach(q=>{if(R()<.28*ex(q))fire(q,pick(['sigh','headShake','shrug']),1000+R()*900);});
+      if(w)others.filter(q=>q!==w).forEach(q=>{if(R()<.28*ex(q))fire(q,pick(['sigh','headShake','shrug','eyeroll']),1000+R()*900);});
     }
   }
   // Başkası all-in yapınca masadakiler irkilir
   function react(p,kind){
     if(!G||!G.v3||kind!=='allin')return;
-    G.players.forEach(q=>{if(q===p||q.human||q.out||!q.inHand||q.folded)return;if(R()<.3*ex(q))setTimeout(()=>{if(G&&!q.out)Sahne.act(q,'gasp');},350+R()*500);});
+    G.players.forEach(q=>{if(q===p||q.human||q.out||!q.inHand||q.folded)return;if(R()>=.4*ex(q))return;
+      // tepki tarzına göre: kaya donar, saldırgan ve gevşek olan şaşırır, kurnaz olan süzer
+      const v=({kaya:'freeze',manyak:R()<.5?'jawDrop':'gasp',gevsek:R()<.5?'jawDrop':'gasp',kopekbaligi:'scan',tilki:R()<.5?'sidelong':'scan'})[q.style]||'gasp';
+      setTimeout(()=>{if(G&&!q.out)Sahne.act(q,v,{dur:3});},350+R()*500);});
   }
   return {say,event,idle,greet,start,respond,afterShowdown,react};
 })();

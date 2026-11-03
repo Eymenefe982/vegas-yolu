@@ -10,7 +10,7 @@ const Sahne=(()=>{
 const T=window.THREE;
 let OK=false;
 try{if(T){const c=document.createElement('canvas');OK=!!(c.getContext('webgl2')||c.getContext('webgl'));}}catch(e){}
-if(!OK)return {ok:false,hall(){return Promise.resolve();},side(){return Promise.resolve();},start(){return Promise.resolve();},stop(){},sync(){},act(){},attend(){},inView(){return true;},shuffle(){},say(){return false;},croup(){},resetView(){},focus(){},applySettings(){},get active(){return false;}};
+if(!OK)return {ok:false,hall(){return Promise.resolve();},side(){return Promise.resolve();},start(){return Promise.resolve();},stop(){},sync(){},act(){},attend(){},cine(){},inView(){return true;},shuffle(){},say(){return false;},croup(){},resetView(){},focus(){},applySettings(){},get active(){return false;}};
 
 /* ---------- yardımcılar ---------- */
 const R=Math.random,PI=Math.PI,TAU=PI*2;
@@ -193,6 +193,9 @@ function dressTop(sp,d,o){
   if(['shirt','linen','western','hawaii','vest'].includes(kind)){for(const s of[-1,1])put(mesh(box(.05,.035,.01),topM,false),s*.03,.51,fz+.004,-.3,0,s*.6);if(kind==='linen'||kind==='shirt'&&!d.tie)vee(skin,.06,.08,.52,.002);}
   if(kind==='western'){const pm=mat(shade(c1,.8));for(const s of[-1,1])put(mesh(box(.06,.05,.008),pm,false),s*.07,.36,fz+.004);}
   if(kind==='tshirt'){put(mesh(torus(.045,.008,TAU,6,16),mat(shade(c1,.85))),0,.52,.01,PI/2);}
+  if(kind==='turtleneck')put(mesh(torus(.052,.03,TAU,8,18),topM),0,.52,0,PI/2);
+  if(kind==='sweater'){put(mesh(torus(.05,.02,TAU,8,18),topM),0,.52,0,PI/2);put(mesh(torus(.15,.014,TAU,6,24),mat(shade(c1,.85))),0,.07,0,PI/2);}
+  if(kind==='polo'){for(const s of[-1,1])put(mesh(box(.05,.03,.01),topM,false),s*.032,.515,fz+.004,-.3,0,s*.5);for(let i=0;i<2;i++)put(mesh(sph(.005,6,4),mat('#e8e2d2'),false),0,.46-i*.035,fz+.006);}
   const tie=d.tie;
   if(tie){
     const tm=mat(tie[1],{roughness:.5});
@@ -204,6 +207,12 @@ function dressTop(sp,d,o){
   if(acc.includes('chain')){const c=mesh(torus(.068,.005,TAU,6,28),GOLD(),false);put(c,0,.49,.03,1.3);}
   if(acc.includes('pearls')){const c=mesh(torus(.064,.009,TAU,8,30),mat('#f3efe6',{roughness:.2}),false);put(c,0,.5,.025,1.32);}
   if(acc.includes('pocket'))put(mesh(box(.035,.02,.008),mat('#f2efe8'),false),.075,.39,fz+.006);
+  if(acc.includes('pocketRed'))put(mesh(box(.035,.02,.008),mat('#b8323a'),false),.075,.39,fz+.006);
+  if(acc.includes('pendant'))put(mesh(sph(.011,8,6),mat('#3ab0c9',{emissive:'#1a6a8a',emissiveIntensity:.6,roughness:.15,metalness:.3}),false),0,.42,fz+.018);
+  if(acc.includes('tieclip')&&tie)put(mesh(box(.034,.004,.004),GOLD(),false),0,.405,fz+.017,-.14);
+  if(acc.includes('suspenders'))for(const s of[-1,1])put(mesh(box(.012,.46,.006),mat('#2a1c14',{roughness:.7}),false),s*.075,.27,fz+.009,-.04);
+  if(acc.includes('brooch'))put(mesh(sph(.011,8,6),GOLD(),false),-.07,.42,fz+.008);
+  if(acc.includes('lapelFlower'))put(mesh(sph(.011,8,6),mat('#c0232c',{roughness:.6}),false),-.07,.42,fz+.01);
   if(acc.includes('scarf')){const sm=mat('#8a3b2a',{roughness:.95});put(mesh(torus(.06,.025,TAU,8,18),sm),0,.52,0,PI/2);put(mesh(box(.05,.22,.02),sm),-.04,.38,fz+.012,-.1,0,.08);}
 }
 function dressHead(face,head,d,o){
@@ -222,6 +231,23 @@ function dressHead(face,head,d,o){
   if(hs==='updo')put(mesh(sph(.06,14,10),hairM),0,.1,-.06);
   if(hs==='curly')for(let i=0;i<20;i++){const a=R()*TAU,b=R()*.48*PI;put(mesh(sph(.03,8,6),hairM),Math.sin(b)*Math.cos(a)*.1,Math.cos(b)*.11,Math.sin(b)*Math.sin(a)*.1-.01);}
   if(hs==='messy')for(let i=0;i<7;i++)put(mesh(geo('spk',()=>new T.ConeGeometry(.018,.05,5)),hairM),(R()-.5)*.1,.1,(R()-.5)*.09,(R()-.5)*.8,0,(R()-.5)*.8);
+  const hcol=(d.hair&&d.hair[1])||'#2a1d14';
+  if(hs==='sidepart'){cap(.32);back(.68);put(mesh(box(.118,.02,.05),hairM),.016,.083,.074,.62,0,-.1);put(mesh(box(.004,.016,.1),mat('#0b0908'),false),-.032,.103,.04,.2);}
+  if(hs==='buzz'){const bz=mesh(shell(.1045,0,TAU,0,.46*PI),mat(hcol,{transparent:true,opacity:.6,roughness:1}),false);bz.scale.set(.9,1.08,.98);put(bz,0,.003,-.004);}
+  if(hs==='ponytail'){cap();back();put(mesh(cyl(.026,.012,.2,8),hairM),0,-.03,-.135,.35);put(mesh(torus(.026,.005,TAU,6,10),mat('#8a2a3a'),false),0,.045,-.108,PI/2-.5);}
+  if(hs==='bangs'){cap(.32);put(sk(shell(.113,PI/2+.95,TAU-1.9,0,.66*PI)),0,0,0);put(mesh(box(.17,.04,.03),hairM),0,.088,.082,.3);if(fem)for(const s of[-1,1])put(mesh(box(.03,.2,.06),hairM),s*.09,-.09,-.005);}
+  if(hs==='braid'){cap();back();for(let i=0;i<5;i++)put(mesh(sph(.03-i*.002,8,6),hairM),0,-.02-i*.05,-.115-i*.006);put(mesh(torus(.018,.004,TAU,6,10),mat('#c9a24a'),false),0,-.24,-.145,PI/2);}
+  if(hs==='afro'){put(mesh(shell(.15,PI,PI,0,.62*PI),hairM),0,.012,-.01);put(sk(shell(.132,0,TAU,0,.34*PI)),0,.018,-.004);}
+  // saç telleri: açık tonlu ince çizgiler saça parlaklık ve doku verir
+  if(hs!=='bald'&&hs!=='balding'&&hs!=='buzz'&&Q()!=='low'){
+    const hHi=mat(shade(hcol,1.45),{roughness:.5}),rr=rngOf(seedOf(d)^0x9e37);
+    for(let i=0;i<11;i++){
+      const a=rr()*TAU,bmax=Math.sin(a)>0?.3:.42,b=(.1+rr()*(bmax-.1))*PI,cb=Math.cos(b),sb=Math.sin(b),rad=.1085;
+      const m=mesh(box(.0045,.003,.06),hHi,false);
+      m.position.set(sb*Math.cos(a)*rad*.9,cb*rad*1.08+.003,sb*Math.sin(a)*rad*.98-.004);
+      m.quaternion.setFromUnitVectors(_Z,V3(cb*Math.cos(a),-sb,cb*Math.sin(a)).normalize());face.add(m);
+    }
+  }
   const fh=d.face&&d.face[0],fm=d.face?mat(d.face[1],{roughness:.9}):hairM;
   if(fh==='mustache'||fh==='beard'||fh==='goatee')put(mesh(box(.056,.013,.018),fm),0,-.034,.093,.15);
   if(fh==='beard'||fh==='stubble'){const m=mesh(shell(.104,0,PI,PI*.55,PI*.43),fh==='stubble'?mat(d.face[1],{transparent:true,opacity:.42,roughness:1}):fm,false);m.scale.set(.9,1.08,.98);put(m,0,-.004,.002);}
@@ -239,6 +265,9 @@ function dressHead(face,head,d,o){
     if(hat[0]==='flatcap'){const c=mesh(sph(.113,18,12),hm);c.scale.set(1,.42,1.12);put(c,0,.075,.008);put(mesh(box(.14,.006,.05),hm),0,.062,.112,.18);}
     if(hat[0]==='cowboy'){const c=mesh(cyl(.085,.098,.12,16),hm);c.scale.z=1.1;put(c,0,.13,0);const b=mesh(cyl(.2,.2,.008,28),hm);b.scale.z=.85;put(b,0,.075,0);put(mesh(cyl(.1,.1,.02,16),mat('#3a2a1a')),0,.085,0);}
     if(hat[0]==='visor'){put(mesh(torus(.098,.008,TAU,6,24),hm),0,.068,0,PI/2);put(mesh(box(.15,.005,.08),mat(hat[1],{transparent:true,opacity:.8})),0,.072,.122,-.12);}
+    if(hat[0]==='fedora'){const c=mesh(cyl(.078,.092,.1,16),hm);c.scale.z=1.08;put(c,0,.125,0);const b=mesh(cyl(.16,.16,.006,28),hm);b.scale.z=.9;put(b,0,.075,0);put(mesh(cyl(.094,.094,.022,16),mat('#1a1410')),0,.09,0);}
+    if(hat[0]==='beanie'){const c=mesh(shell(.114,0,TAU,0,.55*PI),hm);c.scale.set(.95,1,1.04);put(c,0,.028,-.004);put(mesh(torus(.105,.014,TAU,6,24),hm),0,.045,0,PI/2);put(mesh(sph(.022,8,6),hm),0,.138,-.004);}
+    if(hat[0]==='beret'){const c=mesh(sph(.12,16,10),hm);c.scale.set(1,.34,1.05);put(c,.02,.09,-.005,0,0,.12);put(mesh(cyl(.006,.006,.02,5),hm,false),.02,.125,-.005);}
     if(hat[0]==='hood'){const h=mesh(shell(.132,PI/2+1.05,TAU-2.1,0,.64*PI),mat(d.top[1],{roughness:.9,side:T.DoubleSide}));h.scale.set(1,1.06,1.02);put(h,0,.004,-.012);}
   }
   if(acc.includes('headphones')){put(mesh(torus(.12,.008,PI,6,20),mat('#202024',{roughness:.4})),0,.008,-.005);for(const s of[-1,1]){const c=mesh(cyl(.036,.036,.026,14),mat('#2a2a2e',{roughness:.4}));c.rotation.z=PI/2;c.position.set(s*.1,-.002,-.005);face.add(c);}}
@@ -276,17 +305,61 @@ const STYLE_FX={
   tilki:{lean:0,fid:.8,idle:1.05,poses:['chinrest','rail','clasped'],smile:.16},
 };
 
+/* ---------- karakter çeşitliliği: yüz yapısı, ten detayı, kumaş deseni, mekâna göre görünüm ---------- */
+// Her karakter kendi özelliklerinden türeyen sabit bir tohum kullanır: aynı kişi her seferinde aynı yüzle gelir.
+function seedOf(d){const s=[d.sex,d.age,d.skin,(d.hair||[]).join(),(d.top||[]).join(),(d.face||[]).join()].join('|');let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rngOf(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+// -1: yıpranmış mekân (kaçak, kıraathane), 0: sıradan, 1: gösterişli (kumarhaneler)
+function venueTier(){const V=W&&W.V;if(!V)return 0;if(V.worn)return -1;if(V.casino||(V.room&&V.room[2]>=3.3))return 1;return 0;}
+function faceParams(d){
+  const r=rngOf(seedOf(d)),fem=d.sex==='f',age=d.age||35,u=(a,b)=>a+(b-a)*r();
+  const fp={r,nw:u(.85,1.3),nh:u(.88,1.2),nd:u(.85,1.25),jaw:u(.9,1.12)*(fem?.95:1),ear:u(.8,1.3),cheek:u(.7,1.3),brow:u(.8,1.55),mw:u(.88,1.2)*(fem?1.05:1),lines:age>=45?Math.min(1,(age-40)/30):0,freck:r()<.16,lash:fem||r()<.08};
+  const lt=new T.Color(d.skin||'#d6a482').getHSL({h:0,s:0,l:0}).l;
+  const pool=lt>.74?['#3a2a1c','#4a3020','#5a4a2a','#3d5a46','#4a6a8a','#6a7f8f','#2f4a3a']:['#2a1c12','#3a2a1c','#4a3020','#33241a'];
+  fp.eye=d.eyes||pool[Math.floor(r()*pool.length)];
+  return fp;
+}
+// Elmacık, göz çukuru gölgesi, allık, kirpik, yaş çizgileri, çil: yüze derinlik ve yaş verir.
+function faceDetail(face,d,skin,fp,fem){
+  const sk=d.skin||'#d6a482';
+  const zAt=(x,y)=>Math.max(.098*Math.sqrt(Math.max(.05,1-(x/.09)**2-(y/.108)**2)),.025+.075*Math.sqrt(Math.max(.05,1-(x/.075)**2-((y+.055)/.056)**2)))+.0012;
+  const add=(m,x,y,dz=0,sx=1,sy=1,sz=1,rz=0)=>{m.position.set(x,y,zAt(x,y)+dz);m.scale.set(sx,sy,sz);m.rotation.z=rz;face.add(m);return m;};
+  const shadow=(c,o)=>mat(c,{transparent:true,opacity:o,roughness:1,depthWrite:false});
+  const lash=mat('#15110f',{roughness:.6});
+  for(const s of[-1,1]){
+    add(mesh(sph(.022,10,8),skin,false),s*.054,-.016,-.012,fp.cheek*.8,.75,.6);
+    const ring=mesh(torus(.021,.0075,TAU,6,16),shadow(shade(sk,.5),.3),false);ring.position.set(s*.034,.018,.088);face.add(ring);
+    if(fem||fp.r()<.1)add(mesh(sph(.026,10,8),shadow('#d9606a',.17),false),s*.064,-.03,-.008,1,.7,.35);
+    if(fp.lash)add(mesh(box(.034,.0035,.006),lash,false),s*.034,.0335,0,1,1,1,-s*.12);
+  }
+  add(mesh(sph(.02,8,6),shadow(shade(sk,.5),.22),false),0,-.026,.003,1.4,.5,.7);
+  if(fp.lines>0){
+    const lm=shadow(shade(sk,.62),.2+.3*fp.lines);
+    for(const s of[-1,1]){add(mesh(box(.036,.0022,.004),lm,false),s*.034,-.0075,.001,1,1,1,s*.08);add(mesh(box(.003,.04,.004),lm,false),s*.036,-.04,.001,1,1,1,s*.35);}
+    for(let i=0;i<2;i++)add(mesh(box(.08,.0022,.004),lm,false),0,.07+i*.014,.001);
+  }
+  if(fp.freck&&Q()!=='low'){const fm=mat(shade(sk,.8),{roughness:1});for(let i=0;i<12;i++)add(mesh(sph(.0035,5,4),fm,false),(R()<.5?-1:1)*(.012+R()*.05),-.012+R()*.03,.001);}
+}
+// Kumaş deseni: ince çizgi ya da kareli
+function patTex(kind,c){return ctex(64,64,(x,w,h)=>{x.fillStyle=c;x.fillRect(0,0,w,h);if(kind==='pin'){x.fillStyle='rgba(255,255,255,.22)';for(let i=0;i<w;i+=8)x.fillRect(i,0,1.4,h);}else{x.fillStyle='rgba(0,0,0,.18)';for(let i=0;i<w;i+=16){x.fillRect(i,0,6,h);x.fillRect(0,i,w,6);}x.fillStyle='rgba(255,255,255,.1)';x.fillRect(0,0,w,2);}},{rep:[3,3]});}
+
 function makePerson(d,opt){
+  const tier=venueTier();
+  // Yıpranmış mekânlarda erkeklerin bir kısmı tıraşsızdır
+  if(tier<0&&d.sex!=='f'&&!d.face&&rngOf(seedOf(d)^7)()<.3)d=Object.assign({},d,{face:['stubble',(d.hair&&d.hair[1])||'#2a1d14']});
+  const fp=faceParams(d);
   const root=new T.Group();root.userData.pi=opt.idx;
   const P={d,root,idx:opt.idx,standing:!!opt.standing,npc:opt.npc||null,isCroupier:!!opt.croupier,expr:d.expr||1};
   P.sfx=Object.assign({lean:0,fid:1,idle:1,poses:['rail'],smile:.12},STYLE_FX[opt.style]||{});
   P.fid=P.sfx.fid*(.55+.45*Math.min(1.6,P.expr));
   const bw=d.build||1,fem=d.sex==='f';P.bw=bw;
-  const skin=mat(d.skin||'#d6a482',{roughness:.6});
+  // ten: gölge tarafı hafif sıcak kalsın diye az miktarda kendinden aydınlık
+  const skin=mat(d.skin||'#d6a482',{roughness:.58,emissive:shade(d.skin||'#d6a482',.1)});
   const hc=(d.hair&&d.hair[1])||'#2a1d14';
-  const hairM=mat(hc,{roughness:(d.hair&&d.hair[0])==='slick'?.35:.78});
+  const hairM=mat(hc,{roughness:(d.hair&&d.hair[0])==='slick'?.35:.62});
   const [kind,c1,c2]=d.top||['shirt','#dddddd'];
-  const topM=kind==='hawaii'?tmat(hawaiiTex(c1),{roughness:.8}):mat(c1,kind==='leather'?{roughness:.3,metalness:.15}:kind==='tux'?{roughness:.5}:{roughness:.86});
+  const fr=tier>0?.64:tier<0?.95:.86;
+  const topM=kind==='hawaii'?tmat(hawaiiTex(c1),{roughness:.8}):(d.top&&d.top[3])?tmat(patTex(d.top[3],c1),{roughness:fr}):mat(tier<0?shade(c1,.9):c1,kind==='leather'?{roughness:.3,metalness:.15}:kind==='tux'?{roughness:tier>0?.34:.5}:{roughness:fr});
   const innerM=mat(c2||'#ece8df',{roughness:.7});
   const pantsM=mat(d.pants||(kind==='dress'?shade(c1,.9):'#25252b'),{roughness:.85});
   let upM=topM,foM=topM;
@@ -305,21 +378,27 @@ function makePerson(d,opt){
   for(const s of P.sh){spine.add(s);s.add(mesh(sph(.058*bw,12,10),kind==='dress'?skin:upM));}
   dressTop(spine,d,{kind,c1,c2,topM,innerM,skin,fz});
   const neck=mesh(cyl(.04,.045,.12,12),skin);neck.position.set(0,.53,-.005);spine.add(neck);
+  P.adam=mesh(sph(.012,8,6),skin,false);P.adam.scale.setScalar(fem?.6:1);P.adam.position.set(0,.505,.04);spine.add(P.adam);   // yutkunma için gırtlak
   const head=new T.Group();head.position.set(0,.57,0);spine.add(head);P.head=head;
   const face=new T.Group();face.position.set(0,.1,.005);head.add(face);P.face=face;
   const skull=mesh(sph(.1,24,18),skin);skull.scale.set(fem?.86:.9,1.08,.98);face.add(skull);
-  const jaw=mesh(sph(.075,18,12),skin);jaw.scale.set(fem?.88:1,.75,1);jaw.position.set(0,-.055,.025);face.add(jaw);
-  const nose=mesh(sph(.014,10,8),skin);nose.scale.set(1,1.55,1.3);nose.position.set(0,-.006,.098);face.add(nose);
-  for(const s of[-1,1]){const e=mesh(sph(.028,10,8),skin);e.scale.set(.4,.8,.55);e.position.set(s*.09,0,-.005);face.add(e);}
-  const eyeW=mat('#f1ede5',{roughness:.3}),irisM=mat(d.eyes||'#3a2a1c',{roughness:.15});
-  P.eyes=[1,-1].map(s=>{const g=new T.Group();g.position.set(s*.034,.018,.083);g.add(mesh(sph(.0135,12,10),eyeW,false));const ir=mesh(sph(.0072,10,8),irisM,false);ir.position.z=.0105;ir.scale.z=.5;g.add(ir);face.add(g);return g;});
+  const jaw=mesh(sph(.075,18,12),skin);jaw.scale.set((fem?.88:1)*fp.jaw,.75,1);jaw.position.set(0,-.055,.025);face.add(jaw);
+  const nose=mesh(sph(.014,10,8),skin);nose.scale.set(fp.nw,1.55*fp.nh,1.3*fp.nd);nose.position.set(0,-.006,.098+(fp.nd-1)*.004);face.add(nose);
+  for(const s of[-1,1]){const e=mesh(sph(.028,10,8),skin);e.scale.set(.4,.8*fp.ear,.55*fp.ear);e.position.set(s*.09,0,-.005);face.add(e);}
+  const eyeW=mat('#f1ede5',{roughness:.3}),irisM=mat(fp.eye,{roughness:.15}),pupM=mat('#050505',{roughness:.2}),catchM=mat('#ffffff',{emissive:'#ffffff',emissiveIntensity:1.6,roughness:.1});
+  P.pup=[];P.mw=fp.mw;
+  P.eyes=[1,-1].map(s=>{const g=new T.Group();g.position.set(s*.034,.018,.083);g.add(mesh(sph(.0135,12,10),eyeW,false));const ir=mesh(sph(.0072,10,8),irisM,false);ir.position.z=.0105;ir.scale.z=.5;g.add(ir);
+    const pu=mesh(sph(.0036,8,6),pupM,false);pu.position.z=.0136;pu.scale.z=.35;g.add(pu);P.pup.push(pu);
+    const ct=mesh(sph(.0016,6,5),catchM,false);ct.position.set(.0028,.0028,.0142);g.add(ct);   // gözdeki ışık yansıması
+    face.add(g);return g;});
   // göz kapakları: kırpma, aşağı bakınca inme, gerginlikte kısılma
   P.lids=[1,-1].map(s=>{const g=new T.Group();g.position.set(s*.034,.018,.083);g.add(mesh(shell(.0152,0,TAU,0,PI/2),skin,false));face.add(g);return g;});
   const browM=mat(shade(hc,.75),{roughness:.85});
-  P.brows=[1,-1].map(s=>{const b=mesh(box(.032,.0065,.008),browM,false);b.position.set(s*.035,.046,.093);face.add(b);return b;});
-  const lipM=mat(fem?(d.lips||'#a8424a'):shade(d.skin||'#d6a482',.68),{roughness:.5,side:T.DoubleSide});
+  P.brows=[1,-1].map(s=>{const b=mesh(box(.032*(.9+.1*fp.brow),.0065*fp.brow,.008),browM,false);b.position.set(s*.035,.046,.093);face.add(b);return b;});
+  const lipM=mat(fem?(d.lips||'#a8424a'):shade(d.skin||'#d6a482',.68),{roughness:tier>0?.34:.5,side:T.DoubleSide});
   P.mouth=new T.Mesh(torus(.016,.0028,PI,6,14),lipM);P.mouth.position.set(0,-.047,.093);P.mouth.rotation.z=PI;face.add(P.mouth);
   P.mo=mesh(sph(.012,10,6),mat('#3a1512',{roughness:.7}),false);P.mo.scale.set(1.25,.05,.45);P.mo.position.set(0,-.05,.088);face.add(P.mo);
+  faceDetail(face,d,skin,fp,fem);
   dressHead(face,head,d,{hairM});
   // kollar ve bacaklar kök uzayında; her kare iki nokta arasına yerleştirilir
   P.ua=.3;P.fa=.27;
@@ -329,6 +408,7 @@ function makePerson(d,opt){
   P.el=[0,1].map(()=>mk(sph(.042*bw,10,8),upM));
   P.hand=[makeHand(skin,-1),makeHand(skin,1)];P.hand.forEach(h=>root.add(h));
   const acc=d.acc||[];
+  if(acc.includes('bracelet'))for(const h of P.hand){const b=mesh(torus(.036*bw,.0042,TAU,6,16),GOLD(),false);b.position.z=-.006;h.add(b);}
   if(acc.includes('watch'))P.watch=mk(cyl(.038*bw,.038*bw,.022,14),mat(R()<.5?'#c9a24a':'#bfc3c7',{metalness:.85,roughness:.25}));
   if(acc.includes('rings'))for(const h of P.hand){const r=mesh(torus(.011,.003,TAU,5,10),GOLD(),false);r.position.set(.015,0,.11);r.rotation.x=PI/2;h.add(r);}
   const shoe=mat(d.shoes||'#141210',{roughness:.45});
@@ -354,6 +434,7 @@ function makePerson(d,opt){
   P.baseLook={k:'board'};P.look=P.baseLook;P.lookPrev=null;P.hTY=0;P.hTP=.3;
   P.baseSmile=P.sfx.smile;P.smile=P.baseSmile;P.smileT=P.baseSmile;
   P.lean=0;P.vlean=0;P.leanT=0;P.brow=0;P.browT=0;P.shrug=0;P.vshrug=0;P.shrugT=0;P.breath=1;P.breathT=1;P.trem=0;P.peek=0;P.peekT=0;P.nod=0;P.vnod=0;P.nodT=0;
+  P.squint=0;P.squintT=0;P.brow1=0;P.brow1T=0;P.smirk=0;P.smirkT=0;P.gulpK=0;P.gest2=false;P.roll=0;P.pupK=1;
   P.hy=0;P.hvy=0;P.hp=.3;P.hvp=0;P.sy=0;P.svy=0;P.ey=0;P.evy=0;P.ep=0;P.evp=0;
   P.stand=P.standing?1:0;P.idleT=1+R()*3;P.blinkT=1+R()*4;P.blinkK=0;P.sacc=[0,0];P.saccT=0;P.ph=[R()*9,R()*9,R()*9];
   P.freezeUntil=0;P.tremUntil=0;P.tespihSpd=1;P.tespihUntil=0;P.hold=[null,null];P.seq=null;P.prio=0;P.exhale=0;P.smokeT=0;
@@ -383,12 +464,13 @@ function makePerson(d,opt){
     if(s.shrug!==undefined)P.shrugT=s.shrug;if(s.breath!==undefined)P.breathT=s.breath;if(s.peek!==undefined)P.peekT=s.peek;
     if(s.nod!==undefined)P.nodT=s.nod;if(s.rub!==undefined)P.rub=s.rub;if(s.riffle!==undefined)P.riffle=s.riffle;if(s.shake!==undefined)P.shake=s.shake;if(s.open!==undefined)P.openT=s.open;if(s.laugh!==undefined)P.laugh=s.laugh;if(s.shakeA!==undefined)P.shakeA=s.shakeA;if(s.shakeF!==undefined)P.shakeF=s.shakeF;
     if(s.gest!==undefined)P.gest=s.gest;if(s.wipe!==undefined)P.wipe=s.wipe;
+    if(s.squint!==undefined)P.squintT=s.squint;if(s.brow1!==undefined)P.brow1T=s.brow1;if(s.smirk!==undefined)P.smirkT=s.smirk;if(s.roll!==undefined)P.roll=s.roll;
     if(s.hold)P.hold[0]=s.hold==='phone'?P.phone:P.cup;if(s.drop)P.hold[0]=null;
     if(s.grab)P.grab();if(s.release)P.drop();
     P.hw[0]=P.hw[1]=(s.spd||6)*1.6;
     if(s.fn)try{s.fn();}catch(e){}
   };
-  P.reset=()=>{P.drop();P.hk=[...P.baseHand];P.look=P.baseLook;P.leanT=P.leanBase();P.smileT=P.baseSmile;P.browT=0;P.shrugT=0;P.breathT=1;P.peekT=0;P.nodT=0;P.rub=0;P.riffle=0;P.shake=0;P.openT=0;P.laugh=0;P.shakeA=.22;P.shakeF=10;P.gest=0;P.wipe=0;P.prio=0;P.hw=[8,8];P.hold[0]=null;P.seqName=null;};
+  P.reset=()=>{P.drop();P.hk=[...P.baseHand];P.look=P.baseLook;P.leanT=P.leanBase();P.smileT=P.baseSmile;P.browT=0;P.shrugT=0;P.breathT=1;P.peekT=0;P.nodT=0;P.rub=0;P.riffle=0;P.shake=0;P.openT=0;P.laugh=0;P.shakeA=.22;P.shakeF=10;P.gest=0;P.wipe=0;P.squintT=0;P.brow1T=0;P.smirkT=0;P.roll=0;P.prio=0;P.hw=[8,8];P.hold[0]=null;P.seqName=null;};
   P.init=()=>{root.updateMatrixWorld(true);for(let s=0;s<2;s++){P.hc[s].copy(P.handPt(P.hk[s],s));P.hv[s].set(0,0,0);}P.lean=P.leanT=P.leanBase();};
   P.headW=v=>P.head.getWorldPosition(v);
   P.handW=(out,which)=>{if(which==='both'){P.hand[0].getWorldPosition(out);P.hand[1].getWorldPosition(_t2);return out.add(_t2).multiplyScalar(.5);}return P.hand[which===0?0:1].getWorldPosition(out);};
@@ -449,6 +531,13 @@ function makePerson(d,opt){
       case 'mouth':return faceLoc(-.03,-.11,.17);
       case 'drinkUp':return faceLoc(.03,-.12,.15);
       case 'neck':return faceLoc(-.06,-.24,0);
+      case 'bridge':return faceLoc(0,.035,.15);
+      case 'chest':return faceLoc(0,-.3,.13);
+      case 'faceL':return faceLoc(.055,0,.15);
+      case 'faceR':return faceLoc(-.055,0,.15);
+      case 'hairSide':return faceLoc(-.12,.06,.02);
+      case 'pocket':return _t.set(sg*.2,.8,.36);
+      case 'twist':return _t.set(sg*.025,TY+.1,.4);
     }
     return P.restPt(s);
   };
@@ -475,6 +564,18 @@ function makePerson(d,opt){
     if(d.hat&&!l.includes('adjustHat')&&R()<.4)l.push('adjustHat');
     if(out)l.push('stretch','yawn','rubEyes','behindHead');
     if(d.tie||(d.top&&['suit','tux'].includes(d.top[0])))l.push('collar');
+    // kişiye özgü huylar: aksesuarına, saçına ve tarzına göre
+    const ac=d.acc||[],hs0=d.hair&&d.hair[0];
+    if(ac.includes('glasses')||ac.includes('monocle'))l.push('glassesPush','glassesPush');
+    if(ac.includes('chain')||ac.includes('pearls')||ac.includes('pendant'))l.push('touchChain');
+    if(ac.includes('rings'))l.push('ringTwist');
+    if(['long','bob','updo','bangs','braid','ponytail','sidepart'].includes(hs0))l.push('hairTuck');
+    if(ac.includes('sunglassesHead'))l.push('shadesFlip');
+    if(d.tie)l.push('tieAdjust');
+    if(ac.includes('pocket')||(d.top&&['jacket','suit','blazer'].includes(d.top[0])))l.push('pocketCheck');
+    if(d.quirk==='riffle')l.push('chipRoll','chipRoll');
+    if(d.hat&&d.hat[0]==='cowboy')l.push('hatTip');
+    if(opt.style==='tilki'||opt.style==='kopekbaligi')l.push('scan','sidelong');
     return l;
   };
   P.idle=t=>{
@@ -540,10 +641,14 @@ function makePerson(d,opt){
       case 'check':return P.play([{t:.25,R:'tapUp',look:'board',spd:9},{t:.11,R:'tapDown',spd:22},{t:.12,R:'tapUp',spd:20},{t:.11,R:'tapDown',spd:22},{t:.45,R:bh[1],spd:6}],4);
       case 'fold':return P.play([{t:.3,R:'cards',look:'cards',lean:.18,spd:9},{t:.32,R:'muck',spd:11,grab:1},{t:.05,release:1},{t:.6,R:bh[1],lean:-.04,spd:5}],4,'fold');
       case 'win':{const st=[{t:.55,L:'potL',R:'pot',lean:.32,look:'pot',smile:cl(.25+.5*e,0,1),spd:6},{t:.85,L:'chipsL',R:'chips',look:'chips',grab:1,spd:4.5},{t:.1,release:1}];
-        if(o.big&&e>.6)st.push({t:.45,L:bh[0],R:'fistUp',lean:-.05,look:'human',smile:1,brow:.5,spd:11},{t:.7,smile:1},{t:.5,R:bh[1],lean:P.leanBase(),smile:P.baseSmile,spd:6});
+        const cel=o.big&&e>.6&&R()<.85?({manyak:'tableSlap',gevsek:'armsUp',kopekbaligi:'smirk',tilki:'smirk',kaya:'chuckle'})[opt.style]:null;
+        if(cel)st.push({t:.05,fn:()=>{P.prio=0;P.act(cel);}});   // tarzına göre kutlama: coşkulu, kurnaz ya da sakin
+        else if(o.big&&e>.6)st.push({t:.45,L:bh[0],R:'fistUp',lean:-.05,look:'human',smile:1,brow:.5,spd:11},{t:.7,smile:1},{t:.5,R:bh[1],lean:P.leanBase(),smile:P.baseSmile,spd:6});
         else st.push({t:1.6,L:bh[0],R:bh[1],lean:-.05,smile:cl(.15+.55*(e-.5),0,1),look:e>1?'human':'board'});
         return P.play(st,4,'win');}
-      case 'lose':{if(o.big&&e>.7&&R()<.5)return P.act('facepalm');
+      case 'lose':{
+        if(o.big&&R()<.7){const pool=({manyak:['rage','facepalm','handsOnHead'],gevsek:['despair','handsOnHead','facepalm'],kopekbaligi:['headShake','sigh'],tilki:['eyeroll','headShake','sigh'],kaya:['sigh','headShake']})[opt.style];if(pool)return P.act(pick1(pool));}
+        if(o.big&&e>.7&&R()<.5)return P.act('facepalm');
         if(e>1.05)return P.play([{t:.45,smile:-.7,brow:-.8,lean:-.12,shake:1},{t:1,shake:0},{t:1.6,look:'away',breath:2.4}],4);
         if(o.big&&R()<.5)return P.act('headShake');
         return P.play([{t:1.6,smile:0,look:'board'}],3);}
@@ -561,7 +666,7 @@ function makePerson(d,opt){
         const tg=others.length&&R()<.75?{k:'p',i:pick1(others).idx}:{k:'human'};
         P.talkUntil=W.t+dur;
         if(tg.k==='p'){const q=W.people[tg.i];if(q&&!q.seq&&R()<.6)q.play([{t:dur*.8,look:{k:'p',i:P.idx}}],1);}
-        return P.play([{t:dur,look:tg,smile:P.baseSmile+.12,gest:1},{t:.3,gest:0}],1);}
+        return P.play([{t:dur,look:tg,smile:P.baseSmile+.12,gest:1,fn:()=>{P.gest2=R()<.55;}},{t:.3,gest:0}],1);}
       case 'hush':P.hushUntil=W.t+(o.dur||25);P.talkUntil=0;return true;
       case 'dealCard':{const l=root.worldToLocal(_w.copy(o.to));l.y=TY+.05;return P.play([{t:.06,R:'deckR',spd:22},{t:.1,R:l.clone(),spd:24},{t:.16,R:bh[1],spd:12}],2);}
       case 'shuffle':return P.play([{t:.3,L:'shufL',R:'shufR',look:'cards',spd:8,riffle:1},{t:.9},{t:.3,L:bh[0],R:bh[1],riffle:0}],3);
@@ -585,6 +690,33 @@ function makePerson(d,opt){
       case 'drum':return P.play([{t:.25,R:'tapUp',spd:8},{t:.1,R:'tapDown',spd:22},{t:.14,R:'tapUp',spd:20},{t:.1,R:'tapDown',spd:22},{t:.14,R:'tapUp',spd:20},{t:.1,R:'tapDown',spd:22},{t:.14,R:'tapUp',spd:20},{t:.1,R:'tapDown',spd:22},{t:.4,R:bh[1],spd:6}],1);
       case 'shiftSeat':return P.play([{t:.7,lean:P.leanBase()-.05,shrug:.4,spd:4},{t:.7,shrug:0,lean:P.leanBase()+.02}],1);
       case 'croupTidy':return P.play([{t:.5,R:'rack',look:'chips',riffle:1,spd:6},{t:1.4,riffle:1},{t:.5,R:bh[1],riffle:0,spd:6}],1);
+      // tepkiler
+      case 'jawDrop':return P.play([{t:.22,breath:3,brow:1,open:1,lean:-.18,shrug:.4,look:'human',spd:8},{t:1,open:.8,brow:.8},{t:.6,open:0,brow:0,breath:1,shrug:0,lean:P.leanBase()}],3);
+      case 'smirk':return P.play([{t:.35,smirk:1,brow1:.7,look:'human'},{t:1.2},{t:.5,smirk:0,brow1:0}],2);
+      case 'chuckle':return P.play([{t:.25,smile:.8,open:.25,nod:-.1},{t:.7,laugh:.6,smile:.9,open:.2},{t:.4,laugh:0,open:0,nod:0,smile:P.baseSmile}],2);
+      case 'eyeroll':return P.play([{t:.35,look:{k:'w',v:root.localToWorld(V3(0,2.5,-.1))},brow:.5,smile:-.1,spd:6},{t:.5},{t:.4,look:'away',breath:2.4,shrug:.4},{t:.5,brow:0,shrug:0,breath:1}],2);
+      // gözler: tek tek süzme, yan bakış
+      case 'scan':{const os=W.people.filter(q=>q&&q!==P&&q.root.visible&&!q.st.out);if(!os.length)return false;const st=os.slice(0,4).map(q=>({t:.5+R()*.35,look:{k:'p',i:q.idx},squint:.55,brow:-.15}));st.push({t:.4,squint:0,brow:0,look:'board'});return P.play(st,2);}
+      case 'sidelong':return P.play([{t:.35,look:'human',squint:.7,brow:-.25,smirk:.4},{t:1.4},{t:.4,squint:0,brow:0,smirk:0,look:'board'}],2);
+      // blöf ve gerginlik belirtileri
+      case 'gulp':return P.play([{t:.5,breath:2.6,shrug:.25,fn:()=>{P.gulpK=1;}},{t:.4,breath:1,shrug:0}],2);
+      case 'lipBite':return P.play([{t:.35,smile:-.25,open:.12,look:'away',spd:6},{t:.9,smile:-.4,open:.05},{t:.4,smile:P.baseSmile,open:0}],2);
+      // büyük kazanç ve kayıp sahneleri
+      case 'armsUp':case 'cheer':return P.play([{t:.45,L:'fistUp',R:'fistUp',lean:-.12,smile:1,open:.5,brow:.6,look:'human',spd:12},{t:1.1,laugh:1,smile:1,open:.5},{t:.6,L:bh[0],R:bh[1],laugh:0,open:0,brow:0,smile:P.baseSmile,lean:P.leanBase(),spd:6}],4);
+      case 'tableSlap':return P.play([{t:.3,R:'slamUp',smile:1,open:.5,brow:.5,spd:10},{t:.12,R:'slamDown',spd:32,fn:()=>{try{SFX.play('check');}catch(x){}}},{t:1.3,laugh:1,smile:1,open:.4,R:bh[1],look:'human',spd:5},{t:.4,laugh:0,open:0,brow:0,smile:P.baseSmile}],4);
+      case 'chestPound':return P.play([{t:.5,R:'chest',lean:-.1,smile:.8,look:'human',brow:.3,spd:8},{t:1,rub:1},{t:.5,R:bh[1],rub:0,brow:0,smile:P.baseSmile,lean:P.leanBase(),spd:6}],4);
+      case 'handsOnHead':return P.play([{t:.7,L:'behindHead',R:'behindHead',lean:-.18,look:'away',open:.3,brow:.6,spd:7},{t:2.2,breath:2.4},{t:.8,L:bh[0],R:bh[1],lean:P.leanBase(),open:0,brow:0,breath:1,spd:5}],4);
+      case 'despair':return P.play([{t:.6,L:'faceL',R:'faceR',lean:.2,look:'down',brow:-.5,smile:-.6,spd:7},{t:1.9,breath:2.5},{t:.7,L:bh[0],R:bh[1],lean:P.leanBase(),brow:0,smile:P.baseSmile,breath:1,spd:5}],4);
+      // kişiye özgü huylar
+      case 'glassesPush':if(!(d.acc||[]).some(a=>a==='glasses'||a==='monocle'))return false;return P.play([{t:.45,R:'bridge',look:'down',spd:7},{t:.35,rub:1},{t:.45,R:bh[1],rub:0,look:'board',spd:6}],1);
+      case 'touchChain':if(!(d.acc||[]).some(a=>a==='chain'||a==='pearls'||a==='pendant'))return false;return P.play([{t:.6,R:'chest',look:'board',spd:5},{t:1.1,rub:.5},{t:.6,R:bh[1],rub:0,spd:5}],1);
+      case 'ringTwist':if(!(d.acc||[]).includes('rings'))return false;return P.play([{t:.6,L:'twist',R:'twist',look:'down',spd:6},{t:1.6,rub:1},{t:.5,L:bh[0],R:bh[1],rub:0,spd:6}],1);
+      case 'hairTuck':return P.play([{t:.5,R:'hairSide',look:'away',spd:7},{t:.7,rub:.6},{t:.5,R:bh[1],rub:0,spd:6}],1);
+      case 'shadesFlip':if(!(d.acc||[]).includes('sunglassesHead'))return false;return P.play([{t:.45,R:'scalp',look:'away',spd:8},{t:.6,nod:-.08},{t:.45,R:bh[1],nod:0,spd:6}],1);
+      case 'tieAdjust':if(!d.tie)return false;return P.play([{t:.5,R:'chest',look:'down',spd:6},{t:.9,rub:.4},{t:.5,R:bh[1],rub:0,spd:6}],1);
+      case 'pocketCheck':return P.play([{t:.5,R:'pocket',look:'down',lean:.04,spd:6},{t:1},{t:.5,R:bh[1],spd:6}],1);
+      case 'chipRoll':return P.play([{t:.5,R:'chips',look:'chips',spd:8},{t:2.4,riffle:1,roll:1,look:'turn'},{t:.5,R:bh[1],riffle:0,roll:0,spd:6}],1);
+      case 'hatTip':if(!d.hat)return false;return P.play([{t:.45,R:'brim',look:'human',nod:.12,smile:P.baseSmile+.2,spd:8},{t:.7},{t:.45,R:bh[1],nod:0,smile:P.baseSmile,spd:6}],2);
       case 'leave':P.leaving=W.t;P.seq=null;P.releaseAll();P.hk=['rest','rest'];P.from=root.position.clone();P.rot0=root.rotation.y;return true;
     }
     return false;
@@ -637,11 +769,16 @@ function makePerson(d,opt){
     r=spring(P.ep,P.evp,cl(gp-P.hp-P.nod,-.35,.35)+P.sacc[1],30,dt);P.ep=r[0];P.evp=r[1];
     if(t>P.blinkT){P.blinkK=.12;P.blinkT=t+(frz?.8+R()*1.1:2+R()*4);}
     P.blinkK=Math.max(0,P.blinkK-dt);
-    const lid=P.blinkK>0?1.35:-.5+Math.max(0,P.ep)*.8+Math.max(0,-P.brow)*.18+(P.talk>.5?.05:0);
+    P.squint=damp(P.squint,P.squintT,9,dt);P.brow1=damp(P.brow1,P.brow1T,8,dt);P.smirk=damp(P.smirk,P.smirkT,7,dt);
+    const lid=P.blinkK>0?1.35:-.5+Math.max(0,P.ep)*.8+Math.max(0,-P.brow)*.18+(P.talk>.5?.05:0)+P.squint*.38;
     for(let i=0;i<2;i++){const e=P.eyes[i];e.rotation.y=P.ey;e.rotation.x=P.ep;P.lids[i].rotation.x=lid;}
-    P.mouth.scale.set(1,Math.abs(P.smile)<.06?.06:P.smile,1);
+    P.mouth.scale.set(P.mw*(1+P.talk*.16*Math.sin(t*8.3)),Math.abs(P.smile)<.06?.06:P.smile,1);P.mouth.rotation.z=PI+P.smirk*.3;P.mouth.position.x=P.smirk*.006;
+    P.gulpK=Math.max(0,P.gulpK-dt*2.4);P.adam.position.y=.505-Math.sin(P.gulpK*PI)*.03;
+    P.pupK=damp(P.pupK,1+.28*Math.max(0,P.brow)+.15*P.open-.2*Math.max(0,-P.brow)-(P.trem>.2?.1:0),10,dt);P.pup.forEach(u=>u.scale.set(P.pupK,P.pupK,.35));
+    if(P.talk>.05)P.face.rotation.z=Math.sin(t*1.9+P.ph[0])*.045*P.talk;else P.face.rotation.z*=.9;
     P.mo.scale.y=.05+P.talk*Math.abs(Math.sin(t*11+P.ph[1]))*(.55+.25*Math.sin(t*3.7))+P.open*.75;
-    P.brows.forEach((b,i)=>{b.rotation.z=(i?-1:1)*P.brow*.28;b.position.y=.046+Math.max(0,P.brow)*.007-Math.max(0,-P.brow)*.004;});
+    const tb=P.talk>.05?P.talk*Math.max(0,Math.sin(t*2.7+P.ph[2]))*.55:0;   // konuşurken vurgu yapan kaş
+    P.brows.forEach((b,i)=>{const bv=P.brow+tb+(i?0:P.brow1);b.rotation.z=(i?-1:1)*bv*.28;b.position.y=.046+Math.max(0,bv)*.007-Math.max(0,-bv)*.004;});
     root.updateMatrixWorld(true);
     // kollar: yaylı el hedefi + uzak hedefe yay çizerek gitme + IK
     for(let s=0;s<2;s++){
@@ -651,7 +788,7 @@ function makePerson(d,opt){
       springV(c,P.hv[s],_t3,P.hw[s],dt);
       _h.copy(c);
       if(key==='rest'){_h.x+=Math.sin(t*.9+P.ph[s])*.004*fid;_h.z+=Math.sin(t*.7+P.ph[2]+s)*.004*fid;}
-      if(s===1&&P.gest&&P.talk>.05&&key==='rest'){_h.y+=P.talk*(.035+Math.sin(t*3.1)*.025);_h.z+=P.talk*.03*Math.sin(t*2.3);}
+      if(P.gest&&P.talk>.05&&key==='rest'&&(s===1||P.gest2)){const k2=s===1?1:.7;_h.y+=P.talk*(.035+Math.sin(t*3.1+s*1.7)*.025)*k2;_h.z+=P.talk*.03*Math.sin(t*2.3+s)*k2;}
       if(P.trem>.02){const a=P.trem*.007;_h.x+=Math.sin(t*43+s*2)*a;_h.y+=Math.sin(t*51+s)*a;_h.z+=Math.sin(t*37)*a;}
       if(P.riffle&&s===1)_h.y+=Math.abs(Math.sin(t*13))*.013;
       if(P.rub&&s===1)_h.x+=Math.sin(t*7)*.02;
@@ -662,6 +799,7 @@ function makePerson(d,opt){
       ik(S,_h,P.ua,P.fa,POLE[s],_e);
       place(P.up[s],S,_e);place(P.fo[s],_e,_h);P.el[s].position.copy(_e);
       P.hand[s].position.copy(_h);_t.subVectors(_h,_e).normalize();P.hand[s].quaternion.setFromUnitVectors(_Z,_t);
+      if(s===1&&P.roll)P.hand[1].rotateZ(Math.sin(t*9)*.7);
       if(s===0&&P.watch){P.watch.position.lerpVectors(_e,_h,.86);P.watch.quaternion.copy(P.fo[0].quaternion);}
     }
     // taşınan fiş/kart
@@ -701,11 +839,20 @@ function attachProps(P,S,d){
 const SKINS=['#f0d2bc','#e8c2a6','#d9a982','#c99272','#a8714e','#7a4f36'],HAIRC=['#1a120c','#2b1b12','#4a2e1a','#6b4a2e','#a3824e','#cfc6b8'];
 function npcDef(kind){
   const f=kind==='waitress'?true:(kind==='waiter'||kind==='bartender')?false:R()<.45;
-  const hc=pick1(HAIRC),d={sex:f?'f':'m',age:25+Math.floor(R()*40),skin:pick1(SKINS),build:.9+R()*.25,expr:.9+R()*.4,hair:[f?pick1(['long','bun','bob','updo']):pick1(['short','slick','balding','short']),hc]};
+  const hc=pick1(HAIRC),d={sex:f?'f':'m',age:25+Math.floor(R()*40),skin:pick1(SKINS),build:.9+R()*.25,expr:.9+R()*.4,hair:[f?pick1(['long','bun','bob','updo','ponytail','bangs','braid']):pick1(['short','slick','balding','short','sidepart','buzz']),hc]};
+  const tier=venueTier();
   if(kind==='waiter'||kind==='bartender'){d.top=['vest','#f4f1ea',pick1(['#151515','#5a0d14','#1d3a3c'])];d.tie=['bow','#111'];}
   else if(kind==='waitress'){d.top=['vest','#f4f1ea','#7a1020'];d.tie=['bow','#111'];}
   else if(kind==='elegant'){if(f){d.top=['dress',pick1(['#14141a','#5a1a2a','#1d2a4a','#3a2a4a'])];d.acc=['pearls','earrings'];}else{d.top=['tux','#111114','#f6f4ee'];d.tie=['bow','#0b0b0d'];}}
   else if(kind==='tourist'){d.top=f?[pick1(['dress','blazer']),pick1(['#c2185b','#1e88e5','#f9a825','#00897b'])]:[pick1(['hawaii','tshirt','shirt']),pick1(['#1f8a9b','#e0b33c','#b8352a','#3e5f86'])];if(R()<.4)d.hat=['cap',pick1(['#222','#b8352a','#1e3a6a'])];}
+  else if(tier<0){   // yıpranmış mekân: sade, eskimiş giysiler, kasket ve bere
+    d.top=[f?pick1(['cardigan','blazer']):pick1(['jacket','linen','hoodie','cardigan','polo','shirt']),pick1(['#6b5f4a','#4a3a2a','#5b4b3a','#3d5a76','#6a3a3a','#7b7468'])];
+    if(!f&&R()<.45)d.hat=[pick1(['flatcap','cap','beanie']),pick1(['#4a4339','#2b2b30','#6a3a2a'])];
+    if(R()<.25)d.acc=['glasses'];
+  }else if(tier>0){   // gösterişli salon: takım, smokin, mücevher
+    if(f){d.top=['dress',pick1(['#14141a','#5a1a2a','#1d2a4a','#3a2a4a','#8e1424'])];d.acc=pick1([['pearls','earrings'],['pendant','earrings'],['brooch','earrings'],['chain','earrings','bracelet']]);}
+    else{d.top=[pick1(['suit','tux','blazer']),pick1(['#101014','#1b2538','#2b2b30','#3b3f6b']),'#f2efe8'];if(R()<.3)d.top[3]='pin';d.tie=['tie',pick1(['#7a1d2a','#28406b','#c9a227'])];d.hair[0]=pick1(['slick','sidepart','short']);d.acc=pick1([['watch'],['watch','rings'],['pocketRed','watch'],['lapelFlower'],['tieclip','watch']]);if(R()<.2)d.hat=['fedora','#1a1816'];}
+  }
   else d.top=[f?pick1(['dress','blazer']):pick1(['suit','linen','blazer','jacket']),pick1(['#2b2b30','#3b3f6b','#6b6b6e','#ece6d8','#4a3a2a'])];
   if(!f&&R()<.35)d.face=[pick1(['mustache','beard','stubble']),hc];
   return d;
@@ -1285,7 +1432,12 @@ function initRenderer(){
 // Dar (dikey telefon) ekranda daha geniş açı: masa ve yan oyuncular sığsın
 const baseFov=()=>{const a=camera?camera.aspect:1.6;return a<.8?76:a<1.15?68:a<1.45?62:56;};
 const P0=()=>W&&W.pitch0!=null?W.pitch0:-.29,Y0=()=>(W&&W.yaw0)||0;
-function resetView(){cam.focus=-1;cam.tYaw=Y0();cam.tPitch=P0();cam.tFov=baseFov();cam.user=W?W.t-10:-99;}
+function cine(i,dur=3,fov=30){
+  if(!W||!W.ready||W.intro||cam.focus>0||cam.cine||W.t-cam.user<5||i<=0)return;
+  const P=W.people[i];if(!P||!P.root.visible||P.st.out)return;
+  cam.focus=i;cam.cine={i,t0:W.t,until:W.t+dur,f0:cam.tFov-2,f1:fov};cam.tFov=cam.cine.f0;
+}
+function resetView(){cam.cine=null;cam.focus=-1;cam.tYaw=Y0();cam.tPitch=P0();cam.tFov=baseFov();cam.user=W?W.t-10:-99;}
 function focusOn(i){if(!W||!W.people[i])return;cam.focus=i;cam.tFov=24;cam.user=W.t;}
 function pick(e){
   const r=renderer.domElement.getBoundingClientRect();
@@ -1462,6 +1614,11 @@ function updCamera(dt,t){
   const w=cam.drag?16:4.2;
   let r=spring(cam.yaw,cam.vy,cam.tYaw,w,dt);cam.yaw=r[0];cam.vy=r[1];
   r=spring(cam.pitch,cam.vp,cam.tPitch,w,dt);cam.pitch=r[0];cam.vp=r[1];
+  // sinematik yakın plan: kullanıcı kamerayla oynarsa ya da süre dolarsa biter
+  if(cam.cine){const c=cam.cine;
+    if(cam.user>c.t0||W.intro)cam.cine=null;
+    else if(W.t>c.until){if(cam.focus===c.i)resetView();cam.cine=null;}
+    else cam.tFov=lerp(c.f0,c.f1,eIO(cl((W.t-c.t0)/(c.until-c.t0),0,1)));}
   cam.fov=damp(cam.fov,cam.tFov,5,dt);
   camera.position.copy(W.eye);camera.position.y+=Math.sin(t*1.6)*.0025;camera.position.x+=Math.sin(t*.4)*.003;
   camera.rotation.set(cam.pitch,cam.yaw,0,'YXZ');
@@ -2069,12 +2226,13 @@ function say(p,text,ms){
   if(!W||!W.ready||!p)return false;const S=W.seats[p.idx];if(!S||!S.label)return false;
   const el=S.label.querySelector('.say');if(!el)return false;
   ms=ms||2600;el.textContent=text;el.classList.add('on');clearTimeout(S.sayT);S.sayT=setTimeout(()=>el.classList.remove('on'),ms);
-  const P=S.person;if(P&&!P.st.out)P.talkUntil=W.t+Math.min(ms/1000,text.length*.075+.5);
+  const P=S.person;if(P&&!P.st.out){const dur=Math.min(ms/1000,text.length*.075+.5);P.talkUntil=W.t+dur;
+    if(!P.seq)P.play([{t:dur,gest:1,fn:()=>{P.gest2=R()<.5;}},{t:.3,gest:0}],1);}
   return true;
 }
 function croup(a,o){if(W&&W.ready&&W.croupier)W.croupier.act(a,o||{});}
 function shuffle(G){if(!W||!W.ready)return;if(W.croupier)W.croupier.act('shuffle');else{const P=W.seats[G.dealer]&&W.seats[G.dealer].person;if(P)P.act('shuffle');}}
-return {ok:true,start,stop,sync,act,attend,inView,shuffle,say,croup,resetView,focus:focusOn,applySettings,
+return {ok:true,start,stop,sync,act,attend,cine,inView,shuffle,say,croup,resetView,focus:focusOn,applySettings,
   hall,hallGo,side,cardsSet,cardsClear,pileSet,pileOut,pilesClear,sideLabel,sideTurn,bkFan,bkPlay,bkTake,bkClear,rlSpin,rlBet,rlSettle,rlMarker,
   sideSay:(i,t,ms)=>say({idx:i},t,ms),sideAct:(i,v,o)=>act({idx:i},v,o),get active(){return !!(W&&W.ready);},get world(){return W;},get camera(){return camera;}};
 })();
