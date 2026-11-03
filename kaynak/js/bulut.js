@@ -1,6 +1,6 @@
 'use strict';
 /* ================= Bulut kaydı (yalnızca web sürümü) =================
-   Google ile giriş yapan oyuncunun kaydı Firestore'da users/{uid} belgesinde tutulur.
+   Google ile giriş yapan oyuncunun kaydı Firestore'da vegasYolu/{uid} belgesinde tutulur.
    Masaüstü (exe) ve telefon (apk) sürümleri bu dosyayı içermez; orada kayıt yalnızca cihazdadır. */
 (()=>{
   const AYAR=window.FIREBASE_AYAR;
@@ -12,7 +12,7 @@
   async function push(){
     clearTimeout(timer);timer=0;
     if(!uid)return;
-    try{await fb.setDoc(fb.doc(db,'users',uid),{veri:JSON.stringify(SAVE),guncel:fb.serverTimestamp()});}
+    try{await fb.setDoc(fb.doc(db,'vegasYolu',uid),{veri:JSON.stringify(SAVE),guncel:fb.serverTimestamp()});}
     catch(e){console.warn('Bulut kaydı başarısız',e);}
   }
   window.onPersist=()=>{if(uid&&!timer)timer=setTimeout(push,1500);};
@@ -30,7 +30,7 @@
     uid=user.uid;
     btn.textContent=`Çıkış yap (${(user.displayName||user.email||'Hesap').split(' ')[0]})`;
     try{
-      const snap=await fb.getDoc(fb.doc(db,'users',uid));
+      const snap=await fb.getDoc(fb.doc(db,'vegasYolu',uid));
       if(snap.exists()&&snap.data().veri){apply(JSON.parse(snap.data().veri));toast('Hoş geldin','Kaydın hesabından yüklendi.');}
       else{await push();toast('Hesap bağlandı','İlerlemen artık Google hesabına kaydediliyor.');}
     }catch(e){console.warn(e);toast('Bulut kaydı okunamadı','Şimdilik bu cihaza kaydediliyor.');}
