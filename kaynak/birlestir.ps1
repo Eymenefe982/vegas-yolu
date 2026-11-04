@@ -8,7 +8,7 @@ $html = [IO.File]::ReadAllText("$k\index.html", $u)
 $css  = [IO.File]::ReadAllText("$k\css\stil.css", $u)
 $ico  = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$k\ikon.png"))
 $html = $html.Replace('<link rel="stylesheet" href="css/stil.css">', "<style>`n$css</style>")
-foreach ($src in @('lib/three.min.js', 'js/ek.js', 'js/sahne.js', 'js/avatar.js', 'js/oyun.js', 'js/oyunlar.js')) {
+foreach ($src in @('lib/three.min.js', 'js/ek.js', 'js/sahne.js', 'js/avatar.js', 'js/oyun.js', 'js/ekstra.js', 'js/oyunlar.js')) {
   $js = [IO.File]::ReadAllText("$k\$($src.Replace('/', '\'))", $u)
   $tag = "<script src=`"$src`"></script>"
   if (-not $html.Contains($tag)) { throw "index.html icinde $tag bulunamadi." }

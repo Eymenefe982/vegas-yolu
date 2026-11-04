@@ -1576,6 +1576,16 @@ function start(G,el,opt={}){
       const lb=document.createElement('div');lb.className='p3';lb.innerHTML='<b class="n"></b><span class="c"></span><em class="a"></em><span class="h"></span><span class="say"></span>';lb.querySelector('.n').textContent=p.name;
       lb.addEventListener('click',()=>{if(cam.focus===i)resetView();else focusOn(i);});
       labelsEl.appendChild(lb);S.label=lb;S.lt='';
+    }else if(setting('body',true)&&typeof avaDef==='function'){
+      // Kendi bedenin: kamera başının içinde durur, başı çizilmez; omuzlarını, kollarını ve ellerini masada görürsün
+      try{
+        const P=makePerson(avaDef(),{idx:-3,style:'kaya'});P.root.position.copy(o.position);P.root.rotation.y=o.rotation.y;W.scene.add(P.root);
+        P.stackW=S.stackPos.clone().setY(TY+.03);P.cardsW=L(0,TY,.6);P.betW=S.betPos.clone();P.seat=S;
+        attachProps(P,S,{});P.init();P.head.visible=false;
+        P.sfx.poses=['rail'];P.sfx.fid=.35;P.baseLook={k:'board'};P.reset();
+        if(Q()==='low')P.root.traverse(m=>{if(m.isMesh)m.castShadow=false;});
+        W.me=P;
+      }catch(e){console.warn('Beden kurulamadı',e);W.me=null;}
     }
     W.seats[i]=S;
   });
@@ -1629,6 +1639,7 @@ function frame(){
   for(const f of W.upd)f(dt,t);
   for(let i=W.jobs.length-1;i>=0;i--){const j=W.jobs[i];if(j&&j.state==='wait'&&t>j.dead)releaseJob(j);}
   for(const P of W.people)if(P)P.update(dt,t);
+  if(W.me){W.me.root.visible=!W.intro;W.me.update(dt,t);}   // yürüyüş sırasında başsız beden görünmesin
   if(W.croupier)W.croupier.update(dt,t);
   for(const P of W.npcs)updNPC(P,dt,t);
   // kartlar (taşınanlar elin peşinden gider)
@@ -1743,6 +1754,7 @@ function sync(G){
     // bahis yığını: bot bahsi elle iter, sen bahis yapınca fişler kayar
     if(p.bet!==S.betAmt){
       if(p.bet>S.betAmt){const prev=S.betAmt;S.betAmt=p.bet;S.bet.set(p.bet);
+        if(S.human&&W.me)W.me.act('reachChips',{dur:1.1});
         if(prev===0){S.bet.g.position.copy(S.stackPos);
           if(P&&P.seqName==='bet'){if(P.job)releaseJob(P.job);P.job=job('pile',{pile:S.bet,final:S.betPos,hands:P.seqAll?'both':1,wait:1.2});}
           else slide(S.bet,S.betPos,.4,.18);}}

@@ -15,7 +15,7 @@ const STORE='vegas-yolu-v1';
 const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&!!window.matchMedia&&matchMedia('(pointer:coarse)').matches);
 // Kariyer cüzdanı: oyuna bu parayla başlarsın; masaya giriş ücretiyle oturur, kalkınca fişlerini nakde çevirirsin.
 const START_CASH=20000;
-const defSave=()=>({unlocked:1,conquered:[],seen:[],ach:{},cash:START_CASH,rep:{},stats:{hands:0,won:0,best:0,bestCur:'₺'},settings:{speed:'normal',four:false,free:false,sound:true,music:true,musicVol:'normal',view:'3d',notes:true,follow:true,gfx:MOBILE?'mid':'high',bright:'normal',boardHud:true,talk:true}});
+const defSave=()=>({unlocked:1,conquered:[],seen:[],ach:{},cash:START_CASH,rep:{},stats:{hands:0,won:0,best:0,bestCur:'₺'},settings:{speed:'normal',four:false,free:false,sound:true,music:true,musicVol:'normal',body:true,view:'3d',notes:true,follow:true,gfx:MOBILE?'mid':'high',bright:'normal',boardHud:true,talk:true}});
 function mergeSave(s){const d=defSave();return Object.assign(d,s,{stats:Object.assign(d.stats,s.stats||{}),settings:Object.assign(d.settings,s.settings||{}),rep:s.rep||{},_old:s.cash==null});}
 function loadSave(){
   try{const raw=localStorage.getItem(STORE);if(raw)return mergeSave(JSON.parse(raw));}catch(e){}
@@ -23,7 +23,10 @@ function loadSave(){
 }
 let SAVE=loadSave();
 // Web sürümünde Google ile giriş yapılmışsa js/bulut.js kayıt değişikliklerini buluta da yollar.
-function persist(){try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}if(window.onPersist)window.onPersist();}
+// İlerleme parmak izi: yalnızca gerçek ilerleme (para, el, ders, avatar…) değişince SAVE.t yenilenir; ayar değişikliği bulutta çakışma sayılmaz.
+const saveFP=()=>{const s=SAVE||{};return [s.stats&&s.stats.hands,Math.round(s.cash||0),(s.conquered||[]).length,(s.seen||[]).length,Object.keys(s.ach||{}).length,s.daily&&s.daily.last,s.weekly&&s.weekly.k,JSON.stringify(s.avatar||0),JSON.stringify(s.lider||0)].join('|');};
+let _fp=saveFP();
+function persist(){const f=saveFP();if(f!==_fp||!SAVE.t){_fp=f;SAVE.t=Date.now();}try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}if(window.onPersist)window.onPersist();}
 
 /* ================= Ses (Web Audio ile sentezlenir) ================= */
 const SFX=(()=>{
@@ -418,7 +421,7 @@ const REP=[
 ];
 // Tanınırlığın etkisi tarza göre: gevşek ve kaya çekinir, köpekbalığı pek aldırmaz, manyak seni yenip adını almak ister.
 const AWE_ST={gevsek:1.3,kaya:1,tilki:.6,kopekbaligi:.35,manyak:-.4};
-const repWins=v=>(SAVE.rep&&SAVE.rep[v.id])||0;
+const repWins=v=>v.weekly?0:(SAVE.rep&&SAVE.rep[v.id])||0;
 const repLvl=v=>{const w=repWins(v);return w>=4?3:w>=2?2:w>=1?1:0;};
 // Ev sahibinin ikramı: tanınan oyuncunun girişinin bir kısmını ev karşılar; masada yine tam fişle oturursun.
 const entryFee=v=>{const c=REP[repLvl(v)].comp||0,u=v.unit||v.sb;return Math.round(v.buy*(1-c)/u)*u;};
@@ -523,6 +526,7 @@ function openSettings(){
     <div class="set-row"><div><b>Grafik kalitesi</b><small>Gölgeler, arka plandaki insanlar ve çözünürlük; tamamı yeni masada uygulanır</small></div><div class="seg">${seg('gfx','high','Yüksek')}${seg('gfx','mid','Dengeli')}${seg('gfx','low','Hafif')}</div></div>
     <div class="set-row"><div><b>Salon parlaklığı</b><small>Ekran karanlık ya da parlak geliyorsa ayarla</small></div><div class="seg">${seg('bright','dim','Loş')}${seg('bright','normal','Normal')}${seg('bright','bright','Aydınlık')}</div></div>
     <div class="set-row"><div><b>Masa kartları ekranda da</b><small>Ortadaki kartlar ve pot üstte ayrıca gösterilir; ışık ne olursa olsun okunur</small></div>${tog('boardHud')}</div>
+    <div class="set-row"><div><b>Kendi bedenim görünsün</b><small>3D masada kendi kollarını ve ellerini görürsün; karakterinin kıyafeti ve teni kullanılır</small></div>${tog('body')}</div>
     <div class="set-row"><div><b>Kamera sırası geleni izlesin</b><small>3D'de görüş dışındaki oyuncu oynarken başını ona çevirir</small></div>${tog('follow')}</div>
     <div class="set-row"><div><b>Davranış notları (kariyer)</b><small>Gördüğün davranışlar yorumsuz yazılır; kapatırsan yalnızca gözlerine güvenirsin</small></div>${tog('notes')}</div>
     <div class="set-row"><div><b>Dört renkli deste</b><small>Karo mavi, sinek yeşil olur; renkleri karıştırmazsın</small></div>${tog('four')}</div>

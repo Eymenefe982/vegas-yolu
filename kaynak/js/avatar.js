@@ -55,6 +55,23 @@ function avatarSVG(a,px){
   }
   return `<svg viewBox="0 0 100 100" width="${px}" height="${px}" class="ava" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#2a1f16"/>${back}${body}${neck}${head}${face}${front}${acc}</svg>`;
 }
+// 3D masadaki beden için karakter tanımı (sahne.js makePerson biçimi)
+function avaDef(){
+  const a=avaGet(),hair=a.hair==='bald'?'bald':a.hair;
+  const d={sex:a.top==='dress'?'f':'m',age:30,skin:a.skin,hair:[hair,a.hc],expr:1};
+  const tc=a.tc;
+  if(a.top==='shirt')d.top=['shirt',tc,'#ece8df'];
+  else if(a.top==='suit'){d.top=['suit',tc,'#f4f1ea'];d.tie=['tie','#7a1d2a'];}
+  else if(a.top==='tux'){d.top=['tux',avaShade(tc,.45),'#f6f4ee'];d.tie=['bow','#0b0b0d'];}
+  else if(a.top==='hoodie')d.top=['hoodie',tc,'#ece8df'];
+  else d.top=['dress',tc];
+  const ac=[];
+  if(a.acc==='glasses'||a.acc==='sunglasses'||a.acc==='earrings'||a.acc==='chain')ac.push(a.acc);
+  if(a.acc==='mustache'||a.acc==='beard')d.face=[a.acc,a.hc];
+  if(a.acc==='cap')d.hat=['cap',a.tc];
+  d.acc=ac;
+  return d;
+}
 function refreshAvatars(){document.querySelectorAll('[data-ava]').forEach(e=>{e.innerHTML=avatarSVG(null,+e.dataset.ava);});}
 function openAvatar(){
   const a=avaGet();

@@ -4,6 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" type="image/png" href="ikon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<meta name="theme-color" content="#0f0c0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vegas Yolu">
+<meta name="description" content="Tarlabaşı'ndaki bir bodrumdan Las Vegas'ın tepesine bir poker kariyeri. Texas Hold'em, 3D salonlar, rakiplerini davranışlarından oku. Google ile giriş yap, kaydını her cihazda sürdür.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Vegas Yolu">
+<meta property="og:title" content="Vegas Yolu · Poker Kariyeri">
+<meta property="og:description" content="Bodrum katındaki kaçak kumarhaneden Las Vegas'ın tepesindeki süite uzanan bir poker kariyeri. 3D salonlar, gerçekçi rakipler, ücretsiz.">
+<meta property="og:url" content="https://eymenefe982.github.io/vegas-yolu/">
+<meta property="og:image" content="https://eymenefe982.github.io/vegas-yolu/onizleme.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Vegas Yolu · Poker Kariyeri">
+<meta name="twitter:description" content="Bodrum katındaki kaçak kumarhaneden Las Vegas'ın tepesindeki süite uzanan bir poker kariyeri.">
+<meta name="twitter:image" content="https://eymenefe982.github.io/vegas-yolu/onizleme.jpg">
 <style>body{margin:0}img{max-width:100%}</style>
 <title>Vegas Yolu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +49,7 @@
       <button class="choice learn-c" id="go-learn">
         <span class="ch-k">Eğitim</span>
         <span class="ch-t">Pokeri sıfırdan öğren</span>
-        <span class="ch-d">Dokuz ders: kurallar, el sıralaması, pozisyon, olasılık, blöf ve beden dili. Olasılık ve öneri veren koç yalnızca alıştırma masalarında.</span>
+        <span class="ch-d">On üç ders, alıştırmalar ve bitirme sınavı. Olasılık ve öneri veren koç yalnızca alıştırma masalarında.</span>
         <span class="ch-cta" id="learn-cta">Derslere başla →</span>
       </button>
       <button class="choice play-c" id="go-career">
@@ -179,9 +199,11 @@
 <script src="js/sahne.js"></script>
 <script src="js/avatar.js"></script>
 <script src="js/oyun.js"></script>
+<script src="js/ekstra.js"></script>
 <script src="js/oyunlar.js"></script>
 <script src="js/firebase-ayar.js"></script>
 <script src="js/bulut.js"></script>
 
+<script>if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&location.hostname!=='appassets.androidplatform.net')addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});</script>
 </body>
 </html>

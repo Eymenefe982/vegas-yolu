@@ -1,10 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Vegas Yolu: her oyuncu yalnızca kendi kaydını okuyup yazabilir.
-    // Oyun Worktimer Firebase projesini paylaşır; bu blok o projenin mevcut kurallarına eklenir.
+    // Vegas Yolu bu blokları, Worktimer projesinin mevcut kurallarının (users/{uid} vb.) yanına ekler.
+
+    // Kayıt: her oyuncu yalnızca kendi kaydını okuyup yazabilir.
     match /vegasYolu/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Liderlik tablosu: giriş yapan herkes okuyabilir; yalnızca kendi satırını yazar/siler.
+    // Yazma sınırları: alan türleri ve makul üst sınırlar, en az 20 saniyede bir güncelleme.
+    match /vegasLider/{uid} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['ad','net','el','fetih','sampiyon','t'])
+        && request.resource.data.ad is string && request.resource.data.ad.size() <= 16
+        && request.resource.data.net is number && request.resource.data.net >= 0 && request.resource.data.net <= 10000000000000
+        && request.resource.data.el is number && request.resource.data.el >= 0 && request.resource.data.el <= 10000000
+        && request.resource.data.fetih is number && request.resource.data.fetih >= 0 && request.resource.data.fetih <= 20
+        && request.resource.data.sampiyon is number && request.resource.data.sampiyon >= 0 && request.resource.data.sampiyon <= 100000
+        && request.resource.data.t == request.time
+        && (resource == null || request.time > resource.data.t + duration.value(20, 's'));
     }
   }
 }

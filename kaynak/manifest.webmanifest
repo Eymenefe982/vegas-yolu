@@ -1,0 +1,33 @@
+{
+  "name": "Vegas Yolu",
+  "short_name": "Vegas Yolu",
+  "description": "Tarlabaşı'ndaki bir bodrumdan Las Vegas'ın tepesine bir poker kariyeri.",
+  "lang": "tr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f0c0a",
+  "theme_color": "#0f0c0a",
+  "categories": [
+    "games"
+  ],
+  "icons": [
+    {
+      "src": "ikon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "ikon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "ikon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
