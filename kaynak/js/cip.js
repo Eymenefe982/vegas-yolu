@@ -7,8 +7,9 @@
   const q=s=>document.querySelector(s);
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const nfc=new Intl.NumberFormat('tr-TR');
-  const cp=n=>nfc.format(n)+' çip';
-  const tlf=n=>nfc.format(n*CHIP_TL)+' ₺';
+  const nfm=new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2});
+  const tlf=n=>nfm.format(n*CHIP_TL)+' ₺';
+  const cp=tlf;   // oyunda tutarlar para olarak gösterilir (içeride çip sayısı tutulur)
   const STREETS=['Pre-flop','Flop','Turn','River'];
   const root=q('#chips-root');if(!root)return;
 
@@ -55,10 +56,10 @@
         <p class="cs-rule" id="cs-rule"></p>
       </div>
       <div class="cs-card">
-        <h3 class="cs-h">4 · Başlangıç çipi</h3>
+        <h3 class="cs-h">4 · Başlangıç parası</h3>
         <div class="cs-stack">
-          ${[50,100,200,500].map(k=>`<button type="button" class="cs-n wide${k===draft.stack?' on':''}" data-s="${k}">${k} çip<small>${tlf(k)}</small></button>`).join('')}
-          <label class="cs-custom">Başka:<input type="number" inputmode="numeric" min="10" max="10000" step="10" id="cs-stack" value="${draft.stack}"><em>çip</em></label>
+          ${[50,100,200,500].map(k=>`<button type="button" class="cs-n wide${k===draft.stack?' on':''}" data-s="${k}">${tlf(k)}<small>${k} çip</small></button>`).join('')}
+          <label class="cs-custom">Başka:<input type="number" inputmode="decimal" min="1" step="1" id="cs-stack" value="${draft.stack*CHIP_TL}"><em>₺</em></label>
         </div>
       </div>
       <div class="cs-go"><button class="btn" id="cs-start">Oyunu başlat →</button></div>`;
@@ -67,7 +68,8 @@
   function ruleLine(){
     const t=Math.max(1,+draft.chipTL||5);CHIP_TL=t;
     const r=q('#cs-rule');if(r)r.innerHTML=`<b>1 çip = ${nfc.format(t)} ₺</b> · küçük kör <b>${SB} çip (${nfc.format(SB*t)} ₺)</b> · büyük kör <b>${BB} çip (${nfc.format(BB*t)} ₺)</b>`;
-    root.querySelectorAll('.cs-stack .cs-n.wide small').forEach(e=>{e.textContent=tlf(+e.parentNode.dataset.s);});
+    root.querySelectorAll('.cs-stack .cs-n.wide small').forEach(e=>{e.textContent=(+e.parentNode.dataset.s)+' çip';e.parentNode.firstChild.textContent=tlf(+e.parentNode.dataset.s);});
+    const si=q('#cs-stack');if(si&&document.activeElement!==si)si.value=nfm.format(draft.stack*t).replace(/\./g,'').replace(',','.');
   }
   function seatMapHTML(n){
     let h='<div class="cs-oval"></div>';
@@ -337,25 +339,25 @@
         <div class="cs-tags">${tags.join('')}</div>
         <div class="cs-mini">${stackHTML(p.stack,'mini',6)}</div>
         <div class="cs-name">${esc(p.name)}</div>
-        <div class="cs-stk">${nfc.format(p.stack)}<small> çip</small></div>
+        <div class="cs-stk">${tlf(p.stack)}</div>
         <div class="cs-st">${esc(st)||'&nbsp;'}</div>
       </div>`;
     }).join('');
     const bets=P().map((p,i)=>{
       if(!(p.bet>0&&S.phase==='hand'))return '';
       const pos=seatPos(i,n),k=0.42;
-      return `<div class="cs-bet" data-i="${i}" style="left:${(pos.x+(50-pos.x)*k).toFixed(1)}%;top:${(pos.y+(50-pos.y)*k).toFixed(1)}%">${stackHTML(p.bet,'bet',6)}<b>${nfc.format(p.bet)}</b></div>`;
+      return `<div class="cs-bet" data-i="${i}" style="left:${(pos.x+(50-pos.x)*k).toFixed(1)}%;top:${(pos.y+(50-pos.y)*k).toFixed(1)}%">${stackHTML(p.bet,'bet',6)}<b>${tlf(p.bet)}</b></div>`;
     }).join('');
     return `<div class="cs-table"><div class="cs-felt"><div class="cs-center">
         <div class="cs-street">${S.phase==='hand'?STREETS[S.street]:S.phase==='showdown'?'Showdown':'El bitti'}</div>
         <div class="cs-pile">${stackHTML(pot,'pot',9)}</div>
-        <div class="cs-pot"><span>POT</span><b>${nfc.format(pot)}</b><small>çip</small></div>
+        <div class="cs-pot"><span>POT</span><b>${tlf(pot)}</b></div>
       </div></div>${bets}${seats}</div>`;
   }
 
   function renderTable(){
     const pl=P();
-    const head=`<div class="cs-bar"><span><b>El #${S.hand}</b> · KB ${SB} / BB ${BB} çip</span>
+    const head=`<div class="cs-bar"><span><b>El #${S.hand}</b> · Küçük kör ${tlf(SB)} · Büyük kör ${tlf(BB)}</span>
       <span class="cs-bar-btns"><button class="btn ghost small" id="cs-undo" ${undo.length?'':'disabled'}>↶ Geri al</button><button class="btn ghost small" id="cs-stacks">Çipler</button><button class="btn ghost small" id="cs-end">Oyunu bitir</button></span></div>`;
     let ctrl='';
     if(S.phase==='hand'&&S.toAct>=0)ctrl=actionHTML();
@@ -378,16 +380,16 @@
     const word=S.current===0?'Bahis':'Raise';
     return `<div class="cs-turn"><b>${esc(p.name)}</b> sırada<span>${need>0?`Call için <b>${cp(callAmt)}</b> gerekli`:'Bahis yok · pas geçebilirsin'} · Kasasında <b>${cp(p.stack)}</b></span></div>
       ${raiseOK?`<div class="cs-raise">
-        <div class="cs-pre">${presets.map(([k,l,v])=>`<button type="button" data-to="${v}">${l}<small>${nfc.format(v)}</small></button>`).join('')}</div>
+        <div class="cs-pre">${presets.map(([k,l,v])=>`<button type="button" data-to="${v}">${l}<small>${tlf(v)}</small></button>`).join('')}</div>
         <div class="cs-amt"><button type="button" class="cs-pm" data-d="-1" aria-label="Azalt">−</button>
           <input type="range" id="cs-rng" min="${minTo}" max="${maxTo}" step="1" value="${raiseTo}" aria-label="Bahis miktarı">
           <button type="button" class="cs-pm" data-d="1" aria-label="Arttır">+</button>
-          <label class="cs-num"><input type="number" id="cs-num" inputmode="numeric" min="${minTo}" max="${maxTo}" value="${raiseTo}"><em>çip</em></label></div>
+          <label class="cs-num"><input type="number" id="cs-num" inputmode="decimal" step="${CHIP_TL}" min="${minTo*CHIP_TL}" max="${maxTo*CHIP_TL}" value="${raiseTo*CHIP_TL}"><em>₺</em></label></div>
         <div class="cs-eq" id="cs-eq"></div></div>`:''}
       <div class="cs-btns">
         <button class="act fold" id="cs-fold">Çekil</button>
-        <button class="act call" id="cs-call">${need===0?'Pas':(callAmt<need||callAmt===p.stack?`All-in ${nfc.format(callAmt)}`:`Call ${nfc.format(callAmt)}`)}</button>
-        ${raiseOK?`<button class="act raise" id="cs-raisebtn">${raiseTo>=maxTo?'All-in '+nfc.format(maxTo):word+' '+nfc.format(raiseTo)}</button>`:''}
+        <button class="act call" id="cs-call">${need===0?'Pas':(callAmt<need||callAmt===p.stack?`All-in ${tlf(callAmt)}`:`Call ${tlf(callAmt)}`)}</button>
+        ${raiseOK?`<button class="act raise" id="cs-raisebtn">${raiseTo>=maxTo?'All-in '+tlf(maxTo):word+' '+tlf(raiseTo)}</button>`:''}
       </div>`;
   }
   function bindRaise(){
@@ -397,14 +399,14 @@
     const min=+rng.min,max=+rng.max;
     const set=v=>{
       v=Math.max(min,Math.min(max,Math.round(+v||min)));raiseTo=v;
-      rng.value=v;if(document.activeElement!==num)num.value=v;
-      btn.textContent=v>=max?'All-in '+nfc.format(max):(S.current===0?'Bahis ':'Raise ')+nfc.format(v);
-      eq.textContent=`${p.name}: kasadan ${nfc.format(v-p.bet)} çip gider · toplamda ${nfc.format(v)} çip bahis`;
+      rng.value=v;if(document.activeElement!==num)num.value=v*CHIP_TL;
+      btn.textContent=v>=max?'All-in '+tlf(max):(S.current===0?'Bahis ':'Raise ')+tlf(v);
+      eq.textContent=`${p.name}: kasadan ${tlf(v-p.bet)} gider · toplamda ${tlf(v)} bahis`;
     };
     set(raiseTo);
     rng.oninput=()=>set(rng.value);
-    num.oninput=()=>{if(num.value!=='')set(num.value);};
-    num.onchange=()=>set(num.value);
+    num.oninput=()=>{if(num.value!=='')set(Math.round(num.value/CHIP_TL));};
+    num.onchange=()=>set(Math.round(num.value/CHIP_TL));
     root.querySelectorAll('.cs-pre button').forEach(b=>b.onclick=()=>set(b.dataset.to));
     root.querySelectorAll('.cs-pm').forEach(b=>b.onclick=()=>set(raiseTo+ +b.dataset.d));
     btn.onclick=()=>act('raise',raiseTo);
@@ -443,16 +445,16 @@
     const w=S.winner>=0?P()[S.winner]:null;
     const rows=P().map((p,i)=>({p,i})).sort((a,b)=>b.p.stack-a.p.stack).map(({p})=>{
       const net=p.stack-p.start-p.rebuys*S.startStack;
-      return `<li><span>${esc(p.name)}</span><b>${nfc.format(p.stack)} çip</b><em class="${net>0?'up':net<0?'dn':''}">${net>0?'+':''}${nfc.format(net)} çip (${net>0?'+':''}${nfc.format(net*CHIP_TL)} ₺)</em></li>`;
+      return `<li><span>${esc(p.name)}</span><b>${tlf(p.stack)}</b><em class="${net>0?'up':net<0?'dn':''}">${net>0?'+':''}${tlf(net)}</em></li>`
     }).join('');
-    root.innerHTML=`<div class="cs-card cs-over"><h3 class="cs-h">${w?esc(w.name)+' tüm çipleri topladı!':'Oyun bitti'}</h3>
+    root.innerHTML=`<div class="cs-card cs-over"><h3 class="cs-h">${w?esc(w.name)+' tüm parayı topladı!':'Oyun bitti'}</h3>
       <ol class="cs-rank">${rows}</ol>
       <div class="cs-go"><button class="btn" id="cs-again">Yeni oyun kur</button></div></div>`;
   }
 
   /* ---------- Çipler paneli (yeniden giriş) ---------- */
   function stacksModal(){
-    const rows=P().map((p,i)=>`<li><span>${esc(p.name)}${p.out?' <em>(elendi)</em>':''}</span><b>${nfc.format(p.stack)} çip</b>${(p.out||S.phase==='result')?`<button class="btn ghost small" data-rebuy="${i}">+${S.startStack} çip</button>`:''}</li>`).join('');
+    const rows=P().map((p,i)=>`<li><span>${esc(p.name)}${p.out?' <em>(elendi)</em>':''}</span><b>${tlf(p.stack)}</b>${(p.out||S.phase==='result')?`<button class="btn ghost small" data-rebuy="${i}">+${tlf(S.startStack)}</button>`:''}</li>`).join('');
     openModalSafe(`<h3>Çipler</h3><ul class="cs-stk-list">${rows}</ul><p class="cs-sub">Çip eklemek (yeniden giriş) yalnızca eller arasında ya da elenen oyuncular için yapılır.</p><div class="row"><button class="btn" data-close>Tamam</button></div>`);
   }
   function openModalSafe(html){
@@ -493,7 +495,7 @@
     const t=e.target;
     if(t.matches('input[data-i]')){draft.names[+t.dataset.i]=t.value;refreshSeatMap();}
     else if(t.id==='cs-chiptl'){draft.chipTL=+t.value||5;root.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('on',+b.dataset.c===+draft.chipTL));ruleLine();}
-    else if(t.id==='cs-stack'){draft.stack=+t.value||100;root.querySelectorAll('.cs-stack .cs-n').forEach(b=>b.classList.toggle('on',+b.dataset.s===draft.stack));}
+    else if(t.id==='cs-stack'){draft.stack=Math.max(10,Math.round((+t.value||100*CHIP_TL)/CHIP_TL));root.querySelectorAll('.cs-stack .cs-n').forEach(b=>b.classList.toggle('on',+b.dataset.s===draft.stack));}
   });
   root.addEventListener('change',e=>{
     const t=e.target;
