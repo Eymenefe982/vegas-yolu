@@ -23,6 +23,7 @@
 
   /* ---------- Yardımcılar ---------- */
   const P=()=>S.players;
+  const buyinOf=p=>p.buyin!=null?p.buyin:(p.start+(p.rebuys||0)*(S.startStack||0));
   const inHand=p=>!p.out&&!p.folded;                 // elde kalan
   const canAct=p=>inHand(p)&&!p.allin;               // hamle yapabilen
   const totalPot=()=>P().reduce((a,p)=>a+p.total,0);
@@ -90,10 +91,10 @@
       let nm=(draft.names[i]||'').trim()||('Oyuncu '+(i+1));
       let base=nm,k=2;while(used.has(nm.toLocaleLowerCase('tr-TR')))nm=base+' '+(k++);
       used.add(nm.toLocaleLowerCase('tr-TR'));
-      players.push({name:nm,stack,start:stack,bet:0,total:0,folded:false,allin:false,acted:false,noRaise:false,out:false,rebuys:0});
+      players.push({name:nm,stack,start:stack,buyin:stack,bet:0,total:0,folded:false,allin:false,acted:false,noRaise:false,out:false,rebuys:0});
     }
     CHIP_TL=Math.max(1,Math.min(100000,+draft.chipTL||5));
-    S={chipTL:CHIP_TL,phase:'hand',players,dealer:-1,hand:0,street:0,current:0,toAct:-1,minRaise:BB,lastAct:{},log:[],result:null,startStack:stack,winner:null};
+    S={chipTL:CHIP_TL,gone:[],phase:'hand',players,dealer:-1,hand:0,street:0,current:0,toAct:-1,minRaise:BB,lastAct:{},log:[],result:null,startStack:stack,winner:null};
     undo=[];
     newHand();
   }
@@ -101,6 +102,9 @@
   /* ---------- El başlatma ---------- */
   function newHand(){
     const pl=P();
+    S.gone=S.gone||[];
+    pl.forEach((p,i)=>{if(p.leaving&&!p.left)retire(i);});
+    pl.forEach(p=>{if(p.waiting&&p.stack>0){p.out=false;p.waiting=false;}});
     pl.forEach(p=>{if(p.stack<=0&&!p.out)p.out=true;});
     const alive=pl.filter(p=>!p.out);
     if(alive.length<2){S.phase='over';S.winner=alive[0]?pl.indexOf(alive[0]):-1;S.log=[];save();render();return;}
@@ -116,6 +120,25 @@
     log(`El #${S.hand} · Dağıtıcı ${pl[S.dealer].name} · KB ${pl[sb].name} · BB ${pl[bb].name}`);
     settle((bb+1)%P().length);
     save();render();
+  }
+  /* Masadan kalkış: oyuncu kasasını alıp ayrılır, kaydı hesaplaşma için saklanır */
+  function retire(i){
+    const p=P()[i];S.gone=S.gone||[];
+    S.gone.push({name:p.name,buyin:buyinOf(p),final:p.stack});
+    log(`${p.name} masadan kalktı (${tlf(p.stack)})`);
+    p.left=true;p.out=true;p.leaving=false;p.waiting=false;p.stack=0;p.bet=0;p.total=0;p.folded=false;p.allin=false;
+  }
+  function leave(i){
+    const p=P()[i];if(!p||p.left)return;
+    const busy=(S.phase==='hand'||S.phase==='showdown')&&!p.out;
+    if(!busy){retire(i);save();render();return;}
+    p.leaving=true;log(`${p.name} el bitince kalkacak`);
+    if(S.phase==='hand'&&S.toAct===i){act('fold');return;}
+    save();render();
+  }
+  function endGame(){
+    if(S.phase==='hand'||S.phase==='showdown')P().forEach(p=>{p.stack+=p.total;p.total=0;p.bet=0;});   // yarım kalan elde herkesin koyduğu geri döner
+    S.phase='over';S.winner=-1;S.toAct=-1;S.log=[];save();render();
   }
   function firstAlive(){return P().findIndex(p=>!p.out);}
   function post(i,amt){
@@ -178,10 +201,16 @@
       if(live.length===1)return finishUncontested(live[0]);
       const able=P().filter(canAct).length;
       const needs=i=>{const p=P()[i];return canAct(p)&&(p.bet<S.current||(!p.acted&&able>1));};
+      let folded=false;
       for(let k=0;k<n;k++){
         const j=(from+k)%n;
-        if(needs(j)){S.toAct=j;return;}
+        if(needs(j)){
+          const pj=P()[j];
+          if(pj.leaving&&!pj.folded){pj.folded=true;pj.acted=true;S.lastAct[j]='Çekildi';log(`${pj.name} çekildi (kalkıyor)`);from=(j+1)%n;folded=true;break;}
+          S.toAct=j;return;
+        }
       }
+      if(folded)continue;
       // tur bitti
       if(S.street>=3)return toShowdown();
       S.street++;
@@ -333,7 +362,7 @@
       if(i===S.dealer)tags.push('<em class="t-d">D</em>');
       if(i===S.sb&&!p.out)tags.push('<em class="t-sb">KB</em>');
       if(i===S.bb&&!p.out)tags.push('<em class="t-bb">BB</em>');
-      const st=p.out?'Elendi':p.folded?'Çekildi':p.allin?'All-in':(S.lastAct[i]||'');
+      const st=p.left?'Kalktı':p.out?(p.waiting?'Sonraki elde':'Elendi'):p.leaving?'Kalkıyor':p.folded?'Çekildi':p.allin?'All-in':(S.lastAct[i]||'');
       const cls=['cs-pl',i===S.toAct?'turn':'',p.out?'out':'',p.folded?'fold':'',p.allin?'allin':''].filter(Boolean).join(' ');
       return `<div class="${cls}" data-i="${i}" style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%">
         <div class="cs-tags">${tags.join('')}</div>
@@ -358,7 +387,7 @@
   function renderTable(){
     const pl=P();
     const head=`<div class="cs-bar"><span><b>El #${S.hand}</b> · Küçük kör ${tlf(SB)} · Büyük kör ${tlf(BB)}</span>
-      <span class="cs-bar-btns"><button class="btn ghost small" id="cs-undo" ${undo.length?'':'disabled'}>↶ Geri al</button><button class="btn ghost small" id="cs-stacks">Çipler</button><button class="btn ghost small" id="cs-end">Oyunu bitir</button></span></div>`;
+      <span class="cs-bar-btns"><button class="btn ghost small" id="cs-undo" ${undo.length?'':'disabled'}>↶ Geri al</button><button class="btn ghost small" id="cs-stacks">Çipler</button><button class="btn ghost small" id="cs-end">Bitir ve hesapla</button></span></div>`;
     let ctrl='';
     if(S.phase==='hand'&&S.toAct>=0)ctrl=actionHTML();
     else if(S.phase==='showdown')ctrl=showdownHTML();
@@ -443,28 +472,65 @@
   }
   function renderOver(){
     const w=S.winner>=0?P()[S.winner]:null;
-    const rows=P().map((p,i)=>({p,i})).sort((a,b)=>b.p.stack-a.p.stack).map(({p})=>{
-      const net=p.stack-p.start-p.rebuys*S.startStack;
-      return `<li><span>${esc(p.name)}</span><b>${tlf(p.stack)}</b><em class="${net>0?'up':net<0?'dn':''}">${net>0?'+':''}${tlf(net)}</em></li>`
-    }).join('');
-    root.innerHTML=`<div class="cs-card cs-over"><h3 class="cs-h">${w?esc(w.name)+' tüm parayı topladı!':'Oyun bitti'}</h3>
+    const ent=P().filter(p=>!p.left).map(p=>({name:p.name,final:p.stack,buyin:buyinOf(p)})).concat(S.gone||[]);
+    ent.forEach(e=>{e.net=e.final-e.buyin;});
+    ent.sort((x,y)=>y.net-x.net);
+    const rows=ent.map(e=>`<li><span>${esc(e.name)}</span><b>${tlf(e.final)}</b><em class="${e.net>0?'up':e.net<0?'dn':''}">Giriş ${tlf(e.buyin)} · ${e.net>0?'+':''}${tlf(e.net)}</em></li>`).join('');
+    // ödeşme: borçlular alacaklılara ödeyerek hesabı kapatır
+    const dr=ent.filter(e=>e.net<0).map(e=>({n:e.name,v:-e.net*CHIP_TL})),cr=ent.filter(e=>e.net>0).map(e=>({n:e.name,v:e.net*CHIP_TL}));
+    const tr=[];let a=0,b=0;
+    while(a<dr.length&&b<cr.length){
+      const m=Math.min(dr[a].v,cr[b].v);
+      if(m>0.004)tr.push(`<li><b>${esc(dr[a].n)}</b> <i>→</i> <b>${esc(cr[b].n)}</b><span>${nfm.format(Math.round(m*100)/100)} ₺</span></li>`);
+      dr[a].v-=m;cr[b].v-=m;if(dr[a].v<0.005)a++;if(cr[b].v<0.005)b++;
+    }
+    root.innerHTML=`<div class="cs-card cs-over"><h3 class="cs-h">${w?esc(w.name)+' tüm parayı topladı!':'Hesaplaşma'}</h3>
       <ol class="cs-rank">${rows}</ol>
+      ${tr.length?`<h3 class="cs-h" style="margin-top:16px">Kim kime ödeyecek?</h3><ul class="cs-settle">${tr.join('')}</ul>`:'<p class="cs-sub">Kimsenin kimseye borcu yok.</p>'}
       <div class="cs-go"><button class="btn" id="cs-again">Yeni oyun kur</button></div></div>`;
   }
 
-  /* ---------- Çipler paneli (yeniden giriş) ---------- */
+  /* ---------- Çipler paneli: para ekle, masadan kalk, yeni oyuncu ---------- */
   function stacksModal(){
-    const rows=P().map((p,i)=>`<li><span>${esc(p.name)}${p.out?' <em>(elendi)</em>':''}</span><b>${tlf(p.stack)}</b>${(p.out||S.phase==='result')?`<button class="btn ghost small" data-rebuy="${i}">+${tlf(S.startStack)}</button>`:''}</li>`).join('');
-    openModalSafe(`<h3>Çipler</h3><ul class="cs-stk-list">${rows}</ul><p class="cs-sub">Çip eklemek (yeniden giriş) yalnızca eller arasında ya da elenen oyuncular için yapılır.</p><div class="row"><button class="btn" data-close>Tamam</button></div>`);
+    const mid=S.phase==='hand'||S.phase==='showdown';
+    const rows=P().map((p,i)=>{
+      if(p.left)return `<li class="gone"><span>${esc(p.name)} <em>(kalktı)</em></span></li>`;
+      const tag=p.out?(p.waiting?' <em>(sonraki elde)</em>':' <em>(elendi)</em>'):p.leaving?' <em>(el bitince kalkacak)</em>':'';
+      const lock=mid&&!p.out;
+      return `<li><span>${esc(p.name)}${tag}</span><b>${tlf(p.stack)}</b>
+        <span class="cs-addrow"><input type="number" inputmode="decimal" min="${CHIP_TL}" step="${CHIP_TL}" value="${S.startStack*CHIP_TL}" data-amt="${i}" aria-label="Eklenecek para (₺)" ${lock?'disabled':''}><button class="btn ghost small" data-add="${i}" ${lock?'disabled title="Para eller arasında eklenir"':''}>+ Ekle</button><button class="btn ghost small" data-leave="${i}" ${p.leaving?'disabled':''}>Kalk</button></span></li>`;
+    }).join('');
+    const free=P().map((p,i)=>({p,i})).filter(o=>o.p.left||(o.p.out&&!o.p.waiting&&o.p.stack===0));
+    const opts=free.map(o=>`<option value="${o.i}">${o.i+1}. koltuk (${esc(o.p.name)})</option>`).join('')+(P().length<10?`<option value="new">Yeni koltuk (${P().length+1}.)</option>`:'');
+    const form=opts?`<div class="cs-newp"><h4>Yeni oyuncu oturt</h4><div class="cs-addrow"><input type="text" id="cs-np-name" maxlength="14" placeholder="İsim" autocomplete="off"><input type="number" inputmode="decimal" id="cs-np-amt" min="${CHIP_TL}" step="${CHIP_TL}" value="${S.startStack*CHIP_TL}" aria-label="Giriş parası (₺)"><select id="cs-np-seat">${opts}</select><button class="btn small" data-newp>Oturt</button></div><p class="cs-sub">Yeni oyuncu bir sonraki elde oyuna girer.</p></div>`:'';
+    openModalSafe(`<h3>Çipler</h3><ul class="cs-stk-list">${rows}</ul>${form}<p class="cs-sub">Para yalnızca eller arasında eklenir. Kalkan oyuncu el bitince kasasını alıp ayrılır.</p><div class="row"><button class="btn" data-close>Tamam</button></div>`);
   }
+  const toChips=v=>Math.max(1,Math.round((+v||0)/CHIP_TL));
   function openModalSafe(html){
     if(typeof openModal==='function')openModal(html);
     else{const m=q('#modal'),s=q('#sheet');s.innerHTML=html;m.hidden=false;}
     const sh=q('#sheet');
     sh.onclick=e=>{
       const c=e.target.closest('[data-close]');if(c){closeM();return;}
-      const rb=e.target.closest('[data-rebuy]');
-      if(rb){const p=P()[+rb.dataset.rebuy];p.stack+=S.startStack;p.rebuys++;if(p.out){p.out=false;}save();stacksModal();if(S.phase==='result')render();}
+      const ad=e.target.closest('[data-add]');
+      if(ad){
+        const i=+ad.dataset.add,p=P()[i],inp=sh.querySelector(`[data-amt="${i}"]`),ch=toChips(inp&&inp.value);
+        p.stack+=ch;p.buyin=buyinOf(p)+ch;if(p.out&&!p.left)p.waiting=true;
+        log(`${p.name} ${tlf(ch)} ekledi`);save();render();stacksModal();return;
+      }
+      const lv=e.target.closest('[data-leave]');
+      if(lv){
+        const i=+lv.dataset.leave,p=P()[i];
+        confirmM('Masadan kalk',`${esc(p.name)} masadan kalkıp <b>${tlf(p.stack)}</b> alacak.${(S.phase==='hand'||S.phase==='showdown')&&!p.out?' El bitince ayrılır; ortadaki hakkı o ele kadar sürer.':''} Emin misin?`,'Evet, kalksın',()=>{leave(i);stacksModal();});
+        return;
+      }
+      if(e.target.closest('[data-newp]')){
+        const nm=(sh.querySelector('#cs-np-name').value||'').trim()||('Oyuncu '+(P().length+1)),ch=toChips(sh.querySelector('#cs-np-amt').value),sv=sh.querySelector('#cs-np-seat').value;
+        const np={name:nm,stack:ch,start:ch,buyin:ch,bet:0,total:0,folded:false,allin:false,acted:false,noRaise:false,out:true,waiting:true,rebuys:0};
+        if(sv==='new'){if(P().length<10)P().push(np);}
+        else{const i=+sv,old=P()[i];if(!old.left)S.gone.push({name:old.name,buyin:buyinOf(old),final:old.stack});P()[i]=np;}
+        log(`${nm} masaya oturdu (${tlf(ch)})`);save();render();stacksModal();return;
+      }
       const y=e.target.closest('[data-yes]');if(y&&sh._yes){const f=sh._yes;closeM();f();}
     };
   }
@@ -485,7 +551,7 @@
     if(t.closest('#cs-call')){act('call');return;}
     if(t.closest('#cs-undo')){undoLast();return;}
     if(t.closest('#cs-stacks')){stacksModal();return;}
-    if(t.closest('#cs-end')){confirmM('Oyunu bitir','Mevcut oyun silinir ve yeni kurulum başlar. Emin misin?','Evet, bitir',()=>{S=null;undo=[];save();render();});return;}
+    if(t.closest('#cs-end')){confirmM('Bitir ve hesapla','Oyun biter ve kim ne kadar kazandı/kaybetti hesaplaşma ekranında gösterilir. Yarım kalan elde ortadaki paralar sahiplerine geri döner. Emin misin?','Evet, bitir',endGame);return;}
     if(t.closest('#cs-pay')){distribute();return;}
     if(t.closest('#cs-next')){snapClear();newHand();return;}
     if(t.closest('#cs-again')){S=null;undo=[];save();render();return;}

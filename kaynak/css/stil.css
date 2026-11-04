@@ -1148,3 +1148,16 @@ body{
 @keyframes turnPulse{50%{box-shadow:0 0 0 2px var(--accent),0 0 34px rgba(221,171,75,.85)}}
 @media (prefers-reduced-motion:reduce){.cs-col .ch,.cs-bet.new,.cs-pl.turn,.cs-pl.won,.cs-mini.bump,.cs-pile.bump{animation:none}}
 @media (max-width:640px){.cs-stackset.sz-mini .ch{width:13px;height:7px;margin-bottom:-4.5px}.cs-stackset.sz-pot .ch{width:24px;height:12px;margin-bottom:-7.5px}}
+
+/* ---- masadan kalkma, para ekleme, ödeşme ---- */
+.cs-addrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cs-addrow input,.cs-addrow select{height:34px;border-radius:9px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--text);padding:0 8px;font:inherit;font-weight:600;min-width:0}
+.cs-addrow input[type=number]{width:92px}.cs-addrow input[type=text]{width:110px}
+.cs-stk-list li.gone{opacity:.5}
+.cs-stk-list li em{font-style:normal;color:var(--muted);font-size:12px}
+.cs-newp{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:8px}.cs-newp h4{margin:0;font-size:14px;color:var(--accent)}
+.cs-settle{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}
+.cs-settle li{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.04)}
+.cs-settle li i{font-style:normal;color:var(--muted)}.cs-settle li span{margin-left:auto;color:var(--accent);font-weight:800}
+.cs-stk-list li .cs-addrow{width:100%;justify-content:flex-end}
+.cs-stk-list li.gone{padding:8px 12px}
