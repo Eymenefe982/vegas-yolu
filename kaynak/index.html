@@ -59,6 +59,11 @@
         <span class="ch-cta" id="career-cta">Masaları gör →</span>
       </button>
     </div>
+    <button class="chips-entry" id="go-chips">
+      <span class="ce-ico" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="ce-txt"><b>Çip Masası</b><small>Arkadaşlarınla gerçek kartla oynarken çip ve bahisleri takip et · 2–10 kişi</small></span>
+      <span class="ch-cta">Aç →</span>
+    </button>
     <div class="menu-foot">
       <button class="me-ava" data-ava="60" aria-label="Karakterimi düzenle" title="Karakterim"></button><div class="stats" id="stats"></div>
       <div class="foot-btns"><button class="btn ghost small" id="open-avatar" onclick="openAvatar()">Karakterim</button><button class="btn ghost small" id="open-acct" hidden>Google ile giriş</button><button class="btn ghost small" id="open-ach">Başarımlar</button><button class="btn ghost small" id="open-settings">Ayarlar</button></div>
@@ -90,6 +95,17 @@
       <nav class="lnav" id="lnav" aria-label="Dersler"></nav>
       <article class="lesson" id="lesson"></article>
     </div>
+  </div>
+</section>
+
+<section id="scr-chips" class="screen" hidden>
+  <div class="wrap chips">
+    <div class="topbar">
+      <button class="btn ghost small" data-go="scr-menu">← Ana menü</button>
+      <h2 class="h-display">Çip Masası</h2>
+      <span class="muted">Küçük kör 1 çip · büyük kör 2 çip</span>
+    </div>
+    <div id="chips-root"></div>
   </div>
 </section>
 
@@ -201,6 +217,7 @@
 <script src="js/oyun.js"></script>
 <script src="js/ekstra.js"></script>
 <script src="js/oyunlar.js"></script>
+<script src="js/cip.js"></script>
 <script src="js/firebase-ayar.js"></script>
 <script src="js/bulut.js"></script>
 
