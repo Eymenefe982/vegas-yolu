@@ -185,7 +185,8 @@ function openLider(){
     yukle();
   };
   $('#lb-on').onchange=kaydet;$('#lb-ad').onchange=()=>{if($('#lb-on').checked)kaydet();else SAVE.lider={on:false,ad:($('#lb-ad').value||'').trim().slice(0,16)};};
-  yukle();
+  // Açıksa satırı tazele (kurallar sonradan açıldıysa ya da önceki yazma başarısız olduysa kendini düzeltir).
+  if(L.on)B.liderYolla(true).then(ok=>{if(ok)Ach.unlock('lider');}).finally(yukle);else yukle();
 }
 (()=>{
   const b=document.createElement('button');b.className='btn ghost small';b.id='open-lider';b.hidden=true;b.textContent='Liderlik';
