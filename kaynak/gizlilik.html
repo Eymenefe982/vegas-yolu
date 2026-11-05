@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f0c0a">
+<link rel="icon" type="image/png" href="ikon.png">
+<title>Gizlilik · Vegas Yolu</title>
+<style>
+:root{--bg:#0f0c0a;--card:#1a1511;--ink:#ece4d3;--muted:#a99f90;--gold:#ddab4b;--line:rgba(221,171,75,.28)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 16px 64px}
+h1{font-family:Georgia,"Bodoni Moda",serif;color:var(--gold);font-size:34px;margin:8px 0 4px}
+h2{font-family:Georgia,"Bodoni Moda",serif;color:var(--gold);font-size:20px;margin:30px 0 6px;padding-top:6px;border-top:1px solid var(--line)}
+p,li{color:var(--ink)}
+li{margin:4px 0}
+.muted{color:var(--muted);font-size:14px}
+a{color:var(--gold)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.back{display:inline-block;margin-bottom:6px;text-decoration:none}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="./">← Oyuna dön</a>
+<h1>Gizlilik ve kullanım</h1>
+<p class="muted">Son güncelleme: 5 Kasım 2026</p>
+
+<div class="box"><b>Kısaca:</b> Vegas Yolu bir eğlence ve poker öğrenme oyunudur. Gerçek para yoktur; oyundaki tüm paralar ve fişler sanaldır. Reklam, izleme çerezi ve çözümleme (analitik) aracı kullanılmaz. Google ile giriş yaparsan yalnızca oyun kaydın hesabına bağlanır.</div>
+
+<h2>Yaş sınırı ve sanal para</h2>
+<ul>
+<li>Oyun poker, rulet, blackjack ve bakara gibi kumar oyunlarının <b>benzetimini</b> içerir ve <b>18 yaş ve üzeri</b> kişiler içindir.</li>
+<li>Oyunda para yatırılmaz, çekilmez, satın alınmaz; kazanılan hiçbir şey gerçek paraya ya da ödüle çevrilmez. Turnuva ve liderlik tablosu yalnızca oyun içi başarıyı gösterir.</li>
+<li><b>Çip Masası</b>, arkadaşlarla gerçek kartla oynarken çip ve bahisleri hesaplayan bir araçtır. Para aktarımı yapmaz, bahis aracılık etmez. Gerçek para karşılığı oynamak sorumluluğu sana aittir ve bulunduğun yerin yasalarına uygun olmalıdır.</li>
+<li>Kumar bağımlılığı ciddi bir sorundur. Oyun sana zarar vermeye başlarsa yardım al.</li>
+</ul>
+
+<h2>Hangi veriler tutulur</h2>
+<p><b>Giriş yapmadan oynarsan:</b> oyun kaydın (cüzdan, ilerleme, ayarlar, karakter) yalnızca bu cihazın tarayıcı depolamasında durur. Bize ulaşmaz.</p>
+<p><b>Google ile giriş yaparsan:</b></p>
+<ul>
+<li>Google hesabından adın, e-posta adresin, profil fotoğrafın ve hesap kimliğin giriş sırasında Firebase Authentication'a ulaşır. Oyun yalnızca hesap kimliğini ve adının ilk kısmını kullanır.</li>
+<li>Oyun kaydın (cüzdan, el sayısı, fethedilen masalar, başarımlar, karakter seçimin) Firebase Firestore'da <code>vegasYolu</code> koleksiyonunda sana ait tek bir belgede tutulur. Erişim kuralları gereği yalnızca sen okuyup yazabilirsin.</li>
+</ul>
+<p><b>Liderlik tablosuna katılırsan (isteğe bağlı):</b> seçtiğin takma ad, cüzdanındaki toplam para, oynadığın el sayısı, fethettiğin masa sayısı ve şampiyonluk sayın, giriş yapmış diğer oyunculara görünür. Adın, e-postan ve fotoğrafın görünmez. Tablodan çıkınca bu satır silinir. Takma adına gerçek adını, telefonunu ya da başkasına ait bilgi yazma.</p>
+
+<h2>Üçüncü taraflar</h2>
+<ul>
+<li><b>Google / Firebase:</b> giriş ve kayıt saklama. <a href="https://policies.google.com/privacy" rel="noopener">Google gizlilik politikası</a>.</li>
+<li><b>Google Fonts ve Firebase kütüphaneleri:</b> yazı tipleri ve giriş kodu Google sunucularından yüklenir. Bu sırada IP adresin ve tarayıcı bilgin Google'a ulaşır.</li>
+<li><b>GitHub Pages:</b> site GitHub tarafından barındırılır. GitHub, erişim kayıtlarını kendi politikasına göre tutabilir.</li>
+</ul>
+<p>Verilerin satılmaz, reklam için kullanılmaz ve bu hizmetler dışında kimseyle paylaşılmaz.</p>
+
+<h2>Verilerin üzerindeki haklarının kullanımı</h2>
+<ul>
+<li><b>Liderlik satırı:</b> oyunda Liderlik → "Tabloda görün" anahtarını kapat. Satır silinir.</li>
+<li><b>Yerel kayıt:</b> tarayıcı verilerini temizlediğinde cihazdaki kayıt silinir.</li>
+<li><b>Hesaptaki kayıt ve giriş verisi:</b> silinmesini ya da bir kopyasını istersen aşağıdaki iletişimden yaz; hesap kimliğinle ilişkili kayıtlar silinir.</li>
+<li>Kişisel veri sahibi olarak 6698 sayılı KVKK ve benzeri mevzuat kapsamındaki haklarını da bu yolla kullanabilirsin.</li>
+</ul>
+
+<h2>Güvenlik ve sınırlar</h2>
+<ul>
+<li>Oyun kaydı istemcide tutulduğundan, liderlik tablosu güven esaslıdır; abartılı ya da hileli sonuçlar tablodan kaldırılabilir.</li>
+<li>Hizmet olduğu gibi sunulur; kesinti ya da kayıt kaybı olmayacağı garanti edilmez. Önemli bir ilerlemen için hesabına giriş yapmak kaydını cihaz değişiminde korur.</li>
+</ul>
+
+<h2>İletişim</h2>
+<p>Soru, silme talebi ya da bildirim için: <a href="https://github.com/eymenefe982/vegas-yolu/issues" rel="noopener">GitHub sayfasında bir konu aç</a>.</p>
+<p class="muted">Bu metin genel bilgilendirme amaçlıdır; hukuki danışmanlık değildir.</p>
+</main>
+</body>
+</html>
