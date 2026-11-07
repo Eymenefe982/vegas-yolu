@@ -20,7 +20,7 @@
   const fresh=t=>{if(!t)return true;const ms=t.toMillis?t.toMillis():+t;return Date.now()-ms<90000;};
 
   let view='lobi',tables=[],unList=null,pollT=0;
-  let draft={ad:'',mesaj:'',maxKoltuk:6,chipTL:5,baslangic:100,turSn:45};
+  let draft={ad:'',mesaj:'',maxKoltuk:6,chipTL:5,baslangic:100,turSn:45,mekan:'yeralti'};
   let M=null;                       // etkin masa oturumu
   let err='';
 
@@ -85,7 +85,7 @@
     const rows=tables.map(t=>{
       const full=(t.oyuncu||0)>=(t.maxKoltuk||6);
       return `<article class="cs-card on-tbl"><div class="on-th"><h4>${esc(t.ad)}</h4><span class="on-st ${t.durum==='oyunda'?'live':''}">${t.durum==='oyunda'?'Oyunda':'Bekliyor'}</span></div>
-        <p class="cs-sub">Kuran: <b>${esc(t.kurucuAd)}</b> · ${t.oyuncu||0}/${t.maxKoltuk} oyuncu · Başlangıç ${(t.baslangic*t.chipTL).toLocaleString('tr-TR')} ₺ (${t.baslangic} çip) · Süre ${t.turSn} sn</p>
+        <p class="cs-sub">Kuran: <b>${esc(t.kurucuAd)}</b> · ${esc(((typeof VENUES!=='undefined'?VENUES:[]).find(v=>v.id===t.mekan)||{}).name||'')} · ${t.oyuncu||0}/${t.maxKoltuk} oyuncu · Başlangıç ${(t.baslangic*t.chipTL).toLocaleString('tr-TR')} ₺ (${t.baslangic} çip) · Süre ${t.turSn} sn</p>
         ${t.mesaj?`<p class="on-msg">“${esc(t.mesaj)}”</p>`:''}
         <div class="cs-go"><button class="btn small" data-join="${esc(t.id)}" ${full?'disabled':''}>${full?'Masa dolu':'Katıl'}</button></div></article>`;
     }).join('');
@@ -104,6 +104,7 @@
     root.innerHTML=`<div class="cs-card"><h3 class="cs-h">1 · Masanın adı ve mesajı</h3>
         <label class="on-f">Masa adı<input type="text" id="k-ad" maxlength="30" value="${esc(d.ad||myName()+' masası')}"></label>
         <label class="on-f">Karşılama mesajı (listede görünür)<input type="text" id="k-msg" maxlength="140" placeholder="Örn: Yeni başlayanlar da gelebilir, keyifli bir masa!" value="${esc(d.mesaj)}"></label></div>
+      <div class="cs-card"><h3 class="cs-h">Mekân (3D salon)</h3><div class="cs-stack on-venues">${(typeof VENUES!=='undefined'?VENUES:[]).map(v=>`<button type="button" class="cs-n wide${v.id===d.mekan?' on':''}" data-m="${v.id}">${esc(v.name)}<small>${esc(v.city)}</small></button>`).join('')}</div><p class="cs-sub">Masa, oda ve ışıklar seçtiğin mekâna göre kurulur. Oyuncular kendi karakterleriyle oturur.</p></div>
       <div class="cs-card"><h3 class="cs-h">2 · Kaç kişilik?</h3>
         <div class="cs-count">${[2,3,4,5,6,7,8,9].map(k=>`<button type="button" class="cs-n${k===d.maxKoltuk?' on':''}" data-k="${k}">${k}</button>`).join('')}</div></div>
       <div class="cs-card"><h3 class="cs-h">3 · Bir çip kaç ₺?</h3>
@@ -126,7 +127,7 @@
   async function createTable(){
     readKur();
     const ad=(draft.ad||myName()+' masası').slice(0,30);
-    const data={kurucu:B().uid,kurucuAd:myName(),ad,mesaj:draft.mesaj.slice(0,140),maxKoltuk:draft.maxKoltuk,baslangic:draft.baslangic,chipTL:Math.max(1,Math.round(draft.chipTL)),turSn:draft.turSn,
+    const data={mekan:draft.mekan,kurucu:B().uid,kurucuAd:myName(),ad,mesaj:draft.mesaj.slice(0,140),maxKoltuk:draft.maxKoltuk,baslangic:draft.baslangic,chipTL:Math.max(1,Math.round(draft.chipTL)),turSn:draft.turSn,
       durum:'bekliyor',oyuncu:1,oyun:'',nabiz:F().serverTimestamp(),olusturma:F().serverTimestamp()};
     try{
       const ref=await F().addDoc(F().collection(D(),'vegasMasa'),data);
@@ -146,7 +147,7 @@
       if(!s.exists()||(s.data().durum==='bitti')){endSession('Masa kapandı.');return;}
       const d=s.data();let pub=null;
       try{pub=d.oyun?JSON.parse(d.oyun):null;}catch(e){}
-      if(pub){M.pub=pub;M.cfg=Object.assign({},M.cfg,pub.cfg||{},{chipTL:d.chipTL||M.cfg.chipTL,ad:d.ad});}
+      if(pub){M.pub=pub;M.cfg=Object.assign({},M.cfg,pub.cfg||{},{chipTL:d.chipTL||M.cfg.chipTL,ad:d.ad,mekan:d.mekan||M.cfg.mekan||'yeralti'});}
       M.meta=d;
       afterPub();
     },e=>console.warn(e)));
@@ -158,7 +159,9 @@
       const newest=arr[arr.length-1];
       const nm=newest&&newest.t&&newest.t.toMillis?newest.t.toMillis():Date.now();
       if(newest&&newest.uid&&Date.now()-nm<6000)M.say[newest.uid]={m:newest.m,at:nm};
-      M.chat=arr;renderChat();renderTable();
+      M.chat=arr;renderChat();
+      if(newest&&Date.now()-nm<6000)say3D(newest.uid,newest.m,nm);
+      if(!use3D())renderTable();
     },e=>console.warn(e)));
   }
   function afterPub(){
@@ -170,7 +173,7 @@
 
   /* ---------- Ev sahibi (kurucu) ---------- */
   function startHost(id,data){
-    newSession(id,{ad:data.ad,chipTL:data.chipTL,turSn:data.turSn,baslangic:data.baslangic,maxKoltuk:data.maxKoltuk},true);
+    newSession(id,{ad:data.ad,chipTL:data.chipTL,turSn:data.turSn,baslangic:data.baslangic,maxKoltuk:data.maxKoltuk,mekan:data.mekan},true);
     M.engine=OnlineMotor.create({evalCards,newDeck},{turSn:data.turSn,baslangic:data.baslangic,maxKoltuk:data.maxKoltuk});
     M.engine.addPlayer({uid:B().uid,ad:myName(),av:parseAva(myAva())});
     M.heldHand={};M.lastNo={};M.joinT={};M.banned=new Set();M.writing=false;M.dirty=false;
@@ -245,7 +248,7 @@
   /* ---------- Katılma ---------- */
   async function joinTable(id){
     const t=tables.find(x=>x.id===id);if(!t)return;
-    newSession(id,{ad:t.ad,chipTL:t.chipTL,turSn:t.turSn,baslangic:t.baslangic,maxKoltuk:t.maxKoltuk},false);
+    newSession(id,{ad:t.ad,chipTL:t.chipTL,turSn:t.turSn,baslangic:t.baslangic,maxKoltuk:t.maxKoltuk,mekan:t.mekan||'yeralti'},false);
     openMasaView();
     M.joining=true;renderTable();
     listenCommon();
@@ -283,7 +286,7 @@
     const m=M;if(!m)return;
     m.closed=true;
     m.unsubs.forEach(u=>{try{u();}catch(e){}});clearInterval(m.ticker);clearTimeout(m.joinTimer);
-    M=null;
+    stop3D(m);M=null;
     try{
       if(m.host){
         await F().updateDoc(mdoc(m.id),{durum:'bitti',nabiz:F().serverTimestamp()});
@@ -297,8 +300,119 @@
   function endSession(msg){
     const m=M;if(!m)return;
     m.closed=true;m.unsubs.forEach(u=>{try{u();}catch(e){}});clearInterval(m.ticker);clearTimeout(m.joinTimer);
-    M=null;err=msg||'';renderLobi();listenLobby();
+    stop3D(m);M=null;err=msg||'';renderLobi();listenLobby();
     if(msg)toast('Online masa',msg);
+  }
+
+
+  /* ---------- 3D masa (kariyerdeki Sahne ile aynı salon, oyuncular kendi karakterleriyle) ---------- */
+  const use3D=()=>typeof Sahne!=='undefined'&&Sahne.ok&&(typeof SAVE==='undefined'||SAVE.settings.view!=='2d');
+  const STY=['kaya','gevsek','tilki','kopekbaligi','manyak'];
+  const hashU=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
+  // Oyuncunun seçtiği görünümü 3D beden tanımına çevirir (avatar.js avaDef ile aynı, ama verilen karakter için)
+  function avaDefOf(a0){
+    const a=Object.assign({},AVA_DEF,a0||{}),hair=a.hair==='bald'?'bald':a.hair;
+    const d={sex:a.top==='dress'?'f':'m',age:30,skin:a.skin,hair:[hair,a.hc],expr:1};
+    const tc=a.tc;
+    if(a.top==='shirt')d.top=['shirt',tc,'#ece8df'];
+    else if(a.top==='suit'){d.top=['suit',tc,'#f4f1ea'];d.tie=['tie','#7a1d2a'];}
+    else if(a.top==='tux'){d.top=['tux',avaShade(tc,.45),'#f6f4ee'];d.tie=['bow','#0b0b0d'];}
+    else if(a.top==='hoodie')d.top=['hoodie',tc,'#ece8df'];
+    else d.top=['dress',tc];
+    const ac=[];
+    if(a.acc==='glasses'||a.acc==='sunglasses'||a.acc==='earrings'||a.acc==='chain')ac.push(a.acc);
+    if(a.acc==='mustache'||a.acc==='beard')d.face=[a.acc,a.hc];
+    if(a.acc==='cap')d.hat=['cap',a.tc];
+    d.acc=ac;return d;
+  }
+  // Benden başlayıp saat yönünde sıralanan (kalkmamış) koltuklar
+  function roster(p,me){
+    const n=p.players.length,out=[];
+    for(let k=0;k<n;k++){const i=(me+k)%n;if(!p.players[i].left||i===me)out.push(i);}
+    return out;
+  }
+  function render3D(e,p){
+    const me=mySeat(),v=M.v3=M.v3||{on:false,sig:'',hand:null,map:{},G:null};
+    if(!document.getElementById('on-v3')){
+      e.innerHTML='<div class="v3 on-v3" id="on-v3"><div class="v3-labels"></div><div class="v3-fade"></div><div class="v3-title"></div><div class="v3-help"><span class="h-mouse">Sürükle: etrafına bak</span><span class="h-mouse">Tekerlek: yakınlaş</span><span class="h-mouse">Oyuncuya tıkla: odaklan</span><span class="h-touch">Kaydır: etrafına bak</span><span class="h-touch">İki parmak: yakınlaş</span></div></div><div id="on-res"></div>';
+      v.sig='';v.on=false;
+    }
+    const seats=roster(p,me),CTL=M.cfg.chipTL||5;
+    const sig=seats.map(i=>p.players[i].uid+':'+JSON.stringify(p.players[i].av||{})).join('|')+'#'+M.cfg.mekan+'#'+CTL;
+    if(sig!==v.sig){
+      v.sig=sig;v.map={};seats.forEach((i,k)=>{v.map[i]=k;});v.hand=null;v.settle=-1;v.resHand=-1;v.pending=false;
+      v.G={venue:{id:M.cfg.mekan||'yeralti',name:M.cfg.ad||'Online masa',place:'Online masa',cur:'₺',buy:(M.cfg.baslangic||100)*CTL,sb:CTL,bb:2*CTL,unit:CTL},
+        players:seats.map((i,k)=>{const pl=p.players[i];return {idx:k,name:pl.ad,uid:pl.uid,human:k===0,style:STY[hashU(pl.uid)%STY.length],char:avaDefOf(pl.av),chips:0,bet:0,cards:[],folded:false,inHand:false,out:false,allIn:false,show:false,won:0,lastAct:'',actCls:''};}),
+        turn:-1,phase:'bet',board:[],pot:0,dealer:0,handNo:0,v3:true,nRaises:0};
+      try{
+        Sahne.start(v.G,document.getElementById('on-v3'),{intro:'sit'});
+        v.on=true;try{SFX.ambient(M.cfg.mekan||'yeralti');}catch(x){}
+      }catch(x){console.warn('3D masa kurulamadı',x);v.on=false;}
+    }
+    sync3D();
+    const res=document.getElementById('on-res');if(res)res.innerHTML=sonucHTML(p);
+  }
+  // Herkese açık durumu 3D sahneye kariyerdeki G biçiminde aktarır
+  function fill3D(p,opt){
+    const v=M.v3,G=v.G,CTL=M.cfg.chipTL||5,s=p.sonuc,won={};
+    if(s)s.potlar.forEach(r=>{const w=r.kazananlar,each=Math.floor(r.miktar/w.length),rest=r.miktar-each*w.length;w.forEach((i,k)=>{won[i]=(won[i]||0)+each+(k<rest?1:0);});});
+    const done=p.phase==='sonuc';
+    G.phase=done?'done':'bet';G.handNo=p.hand;
+    G.turn=p.phase==='el'&&p.toAct>=0&&v.map[p.toAct]!=null?v.map[p.toAct]:-1;
+    G.dealer=v.map[p.dealer]!=null?v.map[p.dealer]:0;
+    G.board=opt.clear?[]:p.board.slice();
+    const totalWon=Object.values(won).reduce((a,b)=>a+b,0);
+    G.pot=opt.clear?0:(done&&!opt.final?totalWon*CTL:p.pot*CTL);
+    const hc=holeCards();
+    G.players.forEach(q=>{
+      const i=+Object.keys(v.map).find(x=>v.map[x]===q.idx),pl=p.players[i];if(!pl)return;
+      const inHand=!pl.out&&!pl.waiting&&p.phase!=='bekle'&&!pl.left;
+      const gos=s&&s.goster&&s.goster[i],w=won[i]||0;
+      q.inHand=inHand&&!opt.clear;q.folded=inHand&&pl.folded&&!opt.clear;q.out=false;q.allIn=!!pl.allin&&inHand;
+      q.chips=(pl.stack-(done&&!opt.final?w:0))*CTL;q.bet=opt.clear?0:pl.bet*CTL;
+      q.won=done&&!opt.clear?w*CTL:0;
+      q.show=!!gos&&!q.human;
+      q.cards=(opt.clear||!inHand)?[]:(q.human?(hc||[-1,-1]):(gos||[-1,-1]));
+      const la=(p.lastAct&&p.lastAct[i])||'';
+      q.lastAct=la.replace(/\d+/,m=>fm(+m));
+      q.actCls=/Çekildi/.test(la)?'fold':/Bahis|Raise|All-in/.test(la)?'raise':'';
+    });
+  }
+  function sync3D(){
+    const v=M.v3,p=M.pub;
+    if(!v||!v.on||!p||!v.G||!Sahne.active)return;
+    const me=mySeat(),pl=p.players[me];
+    const inHand=pl&&!pl.out&&!pl.waiting&&p.phase!=='bekle';
+    if(inHand&&p.phase==='el'&&!holeCards())return;                        // kartının gelmesini bekle
+    if(v.hand!==p.hand&&!v.pending){
+      if(v.hand!=null){                                                    // yeni el: eski kartları topla, kısa süre sonra dağıt
+        fill3D(p,{clear:true});Sahne.sync(v.G);
+        v.pending=true;clearTimeout(v.nt);
+        v.nt=setTimeout(()=>{v.pending=false;if(M&&M.v3===v){v.hand=p.hand;sync3D();}},900);
+        return;
+      }
+      v.hand=p.hand;
+    }
+    if(v.pending)return;
+    const done=p.phase==='sonuc';
+    if(done&&v.resHand!==p.hand){                                          // sonuç: önce pot kazanana kayar, sonra kasalar güncellenir
+      v.resHand=p.hand;fill3D(p,{});Sahne.sync(v.G);
+      clearTimeout(v.st);v.st=setTimeout(()=>{if(M&&M.v3===v){v.settle=p.hand;fill3D(M.pub,{final:true});Sahne.sync(v.G);}},3600);
+      return;
+    }
+    if(done&&v.settle!==p.hand)return;
+    fill3D(p,{final:true});Sahne.sync(v.G);
+  }
+  function say3D(uid,text,at){
+    const v=M&&M.v3;if(!v||!v.on||!v.G||!Sahne.active)return;
+    const key=uid+'|'+at;if(v.said===key)return;v.said=key;
+    const q=v.G.players.find(x=>x.uid===uid);if(q&&!q.human)Sahne.sideSay(q.idx,text,4200);
+  }
+  function stop3D(m){
+    const v=m&&m.v3;if(!v)return;
+    clearTimeout(v.nt);clearTimeout(v.st);
+    if(v.on){try{Sahne.stop();}catch(e){}try{SFX.ambient(null);}catch(e){}}
+    v.on=false;v.sig='';
   }
 
   /* ---------- Masa çizimi ---------- */
@@ -321,6 +435,8 @@
     const e=document.getElementById('on-table');if(!e||!M)return;
     const p=M.pub;
     if(!p){e.innerHTML=`<p class="cs-sub on-wait">${M.joining?'Masaya katılıyorsun…':'Bağlanıyor…'}</p>`;return;}
+    if(use3D()&&mySeat()>=0){render3D(e,p);return;}
+    if(M.v3&&M.v3.on)stop3D(M);
     const n=p.players.length,me=mySeat();
     const sonuc=p.sonuc;
     const seats=p.players.map((pl,i)=>{
@@ -422,6 +538,7 @@
     if(t.closest('#on-login')){B().girisYap();return;}
     if(t.closest('#on-new')){const a=document.getElementById('on-ad');if(a)lsSet(KAD,a.value.trim().slice(0,16));draft.ad='';renderKur();return;}
     const j=t.closest('[data-join]');if(j){const a=document.getElementById('on-ad');if(a)lsSet(KAD,a.value.trim().slice(0,16));joinTable(j.dataset.join);return;}
+    const mk=t.closest('[data-m]');if(mk&&view==='kur'){readKur();draft.mekan=mk.dataset.m;renderKur();return;}
     const k=t.closest('[data-k]');if(k&&view==='kur'){readKur();draft.maxKoltuk=+k.dataset.k;renderKur();return;}
     const c=t.closest('[data-c]');if(c&&view==='kur'){readKur();draft.chipTL=+c.dataset.c;renderKur();return;}
     const s=t.closest('[data-s]');if(s&&view==='kur'){readKur();draft.baslangic=+s.dataset.s;renderKur();return;}
