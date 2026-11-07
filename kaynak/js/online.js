@@ -272,6 +272,7 @@
   async function sendChat(text){
     text=String(text||'').trim().slice(0,140);if(!text||!M)return;
     if(Date.now()-M.lastSend<1500)return;M.lastSend=Date.now();
+    ownSay(text);
     try{await F().addDoc(mcol(M.id,'mesaj'),{uid:B().uid,ad:myName(),m:text,t:F().serverTimestamp()});}
     catch(e){console.warn(e);toast('Mesaj gönderilemedi','Bir süre sonra tekrar dene.');}
   }
@@ -295,17 +296,20 @@
         await F().setDoc(mdoc(m.id,'katil',B().uid),{ad:myName(),kalk:true,t:F().serverTimestamp()});
       }
     }catch(e){console.warn(e);}
-    if(!silent){renderLobi();listenLobby();}
+    if(!silent)show('scr-online');
   }
   function endSession(msg){
     const m=M;if(!m)return;
     m.closed=true;m.unsubs.forEach(u=>{try{u();}catch(e){}});clearInterval(m.ticker);clearTimeout(m.joinTimer);
-    stop3D(m);M=null;err=msg||'';renderLobi();listenLobby();
+    stop3D(m);M=null;err=msg||'';show('scr-online');
     if(msg)toast('Online masa',msg);
   }
 
 
-  /* ---------- 3D masa (kariyerdeki Sahne ile aynı salon, oyuncular kendi karakterleriyle) ---------- */
+  /* ---------- Oyun ekranı: kariyerdeki #scr-game ile aynı düzen (üstte başlık, ortada 3D masa, altta hamle çubuğu) ---------- */
+  const og=document.getElementById('scr-ogame');
+  const $o=s=>og.querySelector(s);
+  const clampN=(x,a,b)=>Math.max(a,Math.min(b,x));
   const use3D=()=>typeof Sahne!=='undefined'&&Sahne.ok&&(typeof SAVE==='undefined'||SAVE.settings.view!=='2d');
   const STY=['kaya','gevsek','tilki','kopekbaligi','manyak'];
   const hashU=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
@@ -331,12 +335,8 @@
     for(let k=0;k<n;k++){const i=(me+k)%n;if(!p.players[i].left||i===me)out.push(i);}
     return out;
   }
-  function render3D(e,p){
+  function render3D(p){
     const me=mySeat(),v=M.v3=M.v3||{on:false,sig:'',hand:null,map:{},G:null};
-    if(!document.getElementById('on-v3')){
-      e.innerHTML='<div class="v3 on-v3" id="on-v3"><div class="v3-labels"></div><div class="v3-fade"></div><div class="v3-title"></div><div class="v3-help"><span class="h-mouse">Sürükle: etrafına bak</span><span class="h-mouse">Tekerlek: yakınlaş</span><span class="h-mouse">Oyuncuya tıkla: odaklan</span><span class="h-touch">Kaydır: etrafına bak</span><span class="h-touch">İki parmak: yakınlaş</span></div></div><div id="on-res"></div>';
-      v.sig='';v.on=false;
-    }
     const seats=roster(p,me),CTL=M.cfg.chipTL||5;
     const sig=seats.map(i=>p.players[i].uid+':'+JSON.stringify(p.players[i].av||{})).join('|')+'#'+M.cfg.mekan+'#'+CTL;
     if(sig!==v.sig){
@@ -350,7 +350,6 @@
       }catch(x){console.warn('3D masa kurulamadı',x);v.on=false;}
     }
     sync3D();
-    const res=document.getElementById('on-res');if(res)res.innerHTML=sonucHTML(p);
   }
   // Herkese açık durumu 3D sahneye kariyerdeki G biçiminde aktarır
   function fill3D(p,opt){
@@ -418,119 +417,155 @@
   /* ---------- Masa çizimi ---------- */
   function openMasaView(){
     view='masa';stopLobby();
-    root.innerHTML=`<div id="on-top"></div><div id="on-table"></div><div id="on-ctrl" class="cs-ctrl"></div>
-      <div class="cs-card on-chat"><h3 class="cs-h">Masa sohbeti</h3><ol id="on-msgs"></ol>
-        <div class="on-quick">${['Güzel el!','Hadi bakalım.','Şanslısın.','İyi oyun!'].map(x=>`<button type="button" class="btn ghost small" data-q="${esc(x)}">${esc(x)}</button>`).join('')}</div>
-        <form id="on-form" class="on-send"><input type="text" id="on-in" maxlength="140" autocomplete="off" placeholder="Mesaj yaz (en çok 140 karakter)" aria-label="Mesaj"><button class="btn small" type="submit">Gönder</button></form></div>`;
+    og.dataset.venue=M.cfg.mekan||'yeralti';
+    og.classList.toggle('v3on',use3D());
+    show('scr-ogame');
+    document.body.classList.add('in-game');
+    if(typeof refreshAvatars==='function')refreshAvatars();
+    M.hudKey='';M.meKey='';
+    $o('#og-name').textContent=M.cfg.ad||'Online masa';
+    $o('#ov3-board').innerHTML='';$o('#ov3-me').innerHTML='';$o('#og-banner').hidden=true;$o('#on-2d').innerHTML='';
+    $o('#og-emote-list').hidden=true;$o('#og-say-me').hidden=true;
     renderTop();renderTable();renderCtrl();renderChat();
   }
   function renderTop(){
-    const e=document.getElementById('on-top');if(!e||!M)return;
-    const p=M.pub;
-    e.innerHTML=`<div class="cs-bar"><span><b>${esc(M.cfg.ad||'Online masa')}</b> · ${p?`El #${p.hand}`:'Bağlanıyor…'} · KB 1 / BB 2 çip (${fm(1)} / ${fm(2)})</span>
-      <span class="cs-bar-btns">${M.host&&p&&p.phase==='bekle'?`<button class="btn small" id="on-start" ${p.players.filter(x=>!x.left).length<2?'disabled':''}>Oyunu başlat</button>`:''}<button class="btn ghost small" id="on-leave">${M.host?'Masayı kapat':'Masadan kalk'}</button></span></div>`;
+    if(!M)return;
+    const p=M.pub,me=mySeat(),pl=p&&me>=0?p.players[me]:null;
+    $o('#og-info').textContent=p?` · El #${p.hand||0} · Körler ${fm(1)} / ${fm(2)}`:' · Bağlanıyor…';
+    $o('#og-goal-txt').innerHTML=pl?`El <b>#${p.hand}</b> · Fişin <b>${fm(pl.stack)}</b>`:'';
+    $o('#og-goal-bar').style.width=pl?clampN(pl.stack/((M.cfg.baslangic||100)*2)*100,0,100)+'%':'0';
+    $o('#og-leave').textContent=M.host?'← Kapat':'← Kalk';
+    $o('#og-start').hidden=!(M.host&&p&&p.phase==='bekle');
+    if(p)$o('#og-start').disabled=p.players.filter(x=>!x.left).length<2;
+    const pl2=$o('#og-plist');
+    if(pl2&&p)pl2.innerHTML=p.players.filter(x=>!x.left).map(x=>`<li><span class="on-pa">${avaHTML(x.av,22)}</span><b>${esc(x.ad)}</b><em>${fm(x.stack)}</em>${M.host&&x.uid!==B().uid?`<button class="on-kick2" data-kick="${esc(x.uid)}" aria-label="${esc(x.ad)} adlı oyuncuyu çıkar" title="Masadan çıkar">Çıkar</button>`:''}</li>`).join('');
+    const lg=$o('#og-loglist');
+    if(lg&&p)lg.innerHTML=(p.log||[]).slice().reverse().map(l=>`<li>${esc(l)}</li>`).join('');
   }
   const seatPos=(k,n)=>{const a=Math.PI/2+k*2*Math.PI/n;return {x:50+43*Math.cos(a),y:50+40*Math.sin(a)};};
+  function holeCards(){return M&&M.hole&&M.pub&&M.hole.el===M.pub.hand?M.hole.kartlar:null;}
   function renderTable(){
-    const e=document.getElementById('on-table');if(!e||!M)return;
+    if(!M)return;
     const p=M.pub;
-    if(!p){e.innerHTML=`<p class="cs-sub on-wait">${M.joining?'Masaya katılıyorsun…':'Bağlanıyor…'}</p>`;return;}
-    if(use3D()&&mySeat()>=0){render3D(e,p);return;}
-    if(M.v3&&M.v3.on)stop3D(M);
-    const n=p.players.length,me=mySeat();
-    const sonuc=p.sonuc;
+    if(!p||mySeat()<0){$o('#og-banner').hidden=false;$o('#og-banner').innerHTML=`<b>${M.joining&&!p?'Masaya katılıyorsun…':'Masaya yerleşiyorsun…'}</b>`;return;}
+    og.classList.toggle('v3on',use3D());
+    if(use3D()){
+      if(M.v3&&!M.v3.on&&M.v3.sig==='')M.v3.sig='';
+      render3D(p);
+      $o('#on-2d').innerHTML='';
+    }else{
+      if(M.v3&&M.v3.on)stop3D(M);
+      render2D(p);
+    }
+    renderHud(p);
+  }
+  // Ortadaki kartlar + pot (üstte) ve kendi kartların + el adın (köşede): kariyerdeki HUD ile aynı
+  function renderHud(p){
+    const me=mySeat(),pl=p.players[me],hc=holeCards(),done=p.phase==='sonuc';
+    const pot=done?(p.sonuc?p.sonuc.potlar.reduce((a,r)=>a+r.miktar,0):0):p.pot;
+    const bk=p.board.join(',')+'|'+pot+'|'+p.hand;
+    if(bk!==M.hudKey){
+      M.hudKey=bk;
+      $o('#ov3-board').innerHTML=(p.board.length||pot>0)?`${p.board.length?`<div class="cards">${p.board.map(c=>cardHTML(c,'')).join('')}</div>`:''}${pot>0?`<span class="bpot"><span class="chip"></span>Pot <b>${fm(pot)}</b></span>`:''}`:'';
+    }
+    const has=hc&&pl&&!pl.out&&!pl.waiting&&!pl.folded&&p.phase!=='bekle';
+    const mk=(has?hc.join(','):'')+'|'+p.board.length+'|'+(pl&&pl.folded)+'|'+p.hand;
+    if(mk!==M.meKey){
+      M.meKey=mk;
+      const hd=has?(p.board.length>=3?describe(evalCards(hc.concat(p.board))):preflopName(hc)):'';
+      $o('#ov3-me').innerHTML=has?`<div class="cards">${hc.map(c=>cardHTML(c,'')).join('')}</div><span>${hd}</span>`:(pl&&pl.folded&&p.phase==='el'?'<span class="muted">Çekildin</span>':'');
+    }
+    const bn=$o('#og-banner');
+    if(done&&p.sonuc){
+      bn.hidden=false;
+      bn.innerHTML=p.sonuc.potlar.map(r=>{
+        const names=r.kazananlar.map(i=>esc(p.players[i].ad)).join(', ');
+        return `<span><b>${names}</b> kazandı ${fm(r.miktar)}${r.skor!=null?` · ${describe(r.skor)}`:''}</span>`;
+      }).join('');
+    }else bn.hidden=true;
+  }
+  // 3D desteklenmiyorsa ya da düz masa seçildiyse
+  function render2D(p){
+    const n=p.players.length,me=mySeat(),sonuc=p.sonuc;
     const seats=p.players.map((pl,i)=>{
-      const k=me>=0?(i-me+n)%n:i,pos=seatPos(k,n);
+      const k=(i-me+n)%n,pos=seatPos(k,n);
       const st=pl.left?'Kalktı':pl.out?(pl.waiting?'Sonraki elde':'Elendi'):pl.leaving?'Kalkıyor':pl.folded?'Çekildi':pl.allin?'All-in':(p.lastAct[i]||'');
-      const cls=['cs-pl','on-pl',i===p.toAct?'turn':'',pl.out||pl.left?'out':'',pl.folded?'fold':'',pl.allin?'allin':'',i===me?'me':''].filter(Boolean).join(' ');
+      const cls=['cs-pl','on-pl',i===p.toAct?'turn':'',pl.out||pl.left?'out':'',pl.folded?'fold':'',i===me?'me':''].filter(Boolean).join(' ');
       const tags=[i===p.dealer?'<em class="t-d">D</em>':'',i===p.sb&&!pl.out?'<em class="t-sb">KB</em>':'',i===p.bb&&!pl.out?'<em class="t-bb">BB</em>':''].join('');
       const show=sonuc&&sonuc.goster&&sonuc.goster[i];
       const cards=show?`<div class="on-cards">${show.map(c=>cardHTML(c,'')).join('')}</div>`:(!pl.out&&!pl.folded&&p.phase==='el'&&i!==me?`<div class="on-cards">${cardHTML(-1)}${cardHTML(-1)}</div>`:'');
       const say=M.say[pl.uid]&&Date.now()-M.say[pl.uid].at<7000?`<div class="on-say">${esc(M.say[pl.uid].m)}</div>`:'';
-      const kick=M.host&&pl.uid!==B().uid&&!pl.left?`<button class="on-kick" data-kick="${esc(pl.uid)}" title="Masadan çıkar" aria-label="${esc(pl.ad)} adlı oyuncuyu çıkar">×</button>`:'';
-      return `<div class="${cls}" data-i="${i}" style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%">${say}${kick}
-        <div class="cs-tags">${tags}</div>${cards}<div class="on-ava">${avaHTML(pl.av,34)}</div>
-        <div class="cs-name">${esc(pl.ad)}</div><div class="cs-stk">${fm(pl.stack)}</div><div class="cs-st">${esc(st)||'&nbsp;'}</div></div>`;
+      return `<div class="${cls}" style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%">${say}<div class="cs-tags">${tags}</div>${cards}<div class="on-ava">${avaHTML(pl.av,34)}</div><div class="cs-name">${esc(pl.ad)}</div><div class="cs-stk">${fm(pl.stack)}</div><div class="cs-st">${esc(st)||'&nbsp;'}</div></div>`;
     }).join('');
     const bets=p.players.map((pl,i)=>{
       if(!(pl.bet>0&&p.phase==='el'))return '';
-      const k=me>=0?(i-me+n)%n:i,pos=seatPos(k,n),f=.42;
+      const k=(i-me+n)%n,pos=seatPos(k,n),f=.42;
       return `<div class="cs-bet" style="left:${(pos.x+(50-pos.x)*f).toFixed(1)}%;top:${(pos.y+(50-pos.y)*f).toFixed(1)}%"><b>${fm(pl.bet)}</b></div>`;
     }).join('');
-    let center;
-    if(p.phase==='bekle')center=`<div class="cs-street">${M.host?'Oyuncuları bekliyorsun':'Kurucu oyunu başlatacak'}</div><div class="cs-pot"><span>OYUNCU</span><b>${p.players.filter(x=>!x.left).length}</b></div>`;
-    else center=`<div class="cs-street">${p.phase==='el'?OnlineMotor.STREETS[p.street]:'El bitti'}</div>
-      <div class="on-board">${[0,1,2,3,4].map(i=>p.board[i]!=null?cardHTML(p.board[i],''):'<span class="slot"></span>').join('')}</div>
-      <div class="cs-pot"><span>POT</span><b>${fm(p.pot)}</b></div>`;
-    e.innerHTML=`<div class="cs-table on-tbl2"><div class="cs-felt"><div class="cs-center">${center}</div></div>${bets}${seats}</div>${sonucHTML(p)}`;
+    $o('#on-2d').innerHTML=`<div class="cs-table on-tbl2"><div class="cs-felt"><div class="cs-center"><div class="cs-street">${p.phase==='el'?OnlineMotor.STREETS[p.street]:p.phase==='sonuc'?'El bitti':'Bekleniyor'}</div><div class="on-board">${[0,1,2,3,4].map(i=>p.board[i]!=null?cardHTML(p.board[i],''):'<span class="slot"></span>').join('')}</div></div></div>${bets}${seats}</div>`;
   }
-  function sonucHTML(p){
-    if(p.phase!=='sonuc'||!p.sonuc)return '';
-    const s=p.sonuc,rows=s.potlar.map(r=>{
-      const names=r.kazananlar.map(i=>esc(p.players[i].ad)).join(', ');
-      const d=r.skor!=null&&typeof describe==='function'?` · ${describe(r.skor)}`:'';
-      return `<li><b>${names}</b> kazandı <strong>${fm(r.miktar)}</strong>${d}</li>`;
-    }).join('');
-    return `<div class="cs-win on-win"><ul>${rows}</ul><span class="muted" id="on-next"></span></div>`;
-  }
-  function holeCards(){return M&&M.hole&&M.pub&&M.hole.el===M.pub.hand?M.hole.kartlar:null;}
+
+  /* ---------- Hamle çubuğu (kariyerdeki alt çubukla aynı düzen) ---------- */
   function renderCtrl(){
-    const e=document.getElementById('on-ctrl');if(!e||!M)return;
-    const p=M.pub;
-    if(!p){e.innerHTML='';return;}
+    if(!M)return;
+    const p=M.pub,st=$o('#og-status'),hum=$o('#og-human'),rb=$o('#og-rebuy');
+    rb.hidden=true;hum.hidden=true;
+    if(!p){st.textContent='Bağlanıyor…';return;}
     const me=mySeat(),pl=me>=0?p.players[me]:null;
-    const hc=holeCards();
-    const mine=hc&&pl&&!pl.out?`<div class="on-hand"><span class="lbl">Kartların</span><div class="cards">${hc.map(c=>cardHTML(c,'')).join('')}</div></div>`:'';
-    let body='';
-    if(me<0)body=`<p class="cs-sub">Masaya yerleşiyorsun…</p>`;
-    else if(pl.out&&!pl.waiting&&pl.stack===0)body=`<p class="cs-sub">Fişlerin bitti.</p><div class="cs-btns"><button class="btn" id="on-rebuy">Yeniden ${fm(p.cfg.baslangic)} al</button></div>`;
-    else if(pl.out||pl.waiting)body=`<p class="cs-sub">Bir sonraki ele dahil olacaksın.</p>`;
-    else if(p.phase==='el'&&p.toAct===me){
+    if(!pl){st.textContent='Masaya yerleşiyorsun…';return;}
+    if(pl.out&&!pl.waiting&&pl.stack===0){st.innerHTML='Fişlerin bitti.';rb.hidden=false;rb.textContent=`Yeniden ${fm(p.cfg.baslangic)} al`;return;}
+    if(p.phase==='el'&&p.toAct===me&&!pl.out&&!pl.folded){
       const need=Math.max(0,p.current-pl.bet),callAmt=Math.min(need,pl.stack),maxTo=pl.bet+pl.stack;
       const minTo=Math.min(maxTo,p.current===0?2:p.current+p.minRaise);
       const others=p.players.some((o,j)=>j!==me&&!o.out&&!o.folded&&!o.allin&&!o.left);
       const canRaise=pl.stack>need&&others;
-      if(!(M.raiseTo>=minTo&&M.raiseTo<=maxTo))M.raiseTo=minTo;
-      const pot=p.pot;
-      const pre=[['Min',minTo],['½ Pot',p.current+Math.round((pot+need)/2)],['Pot',p.current+pot+need],['All-in',maxTo]].map(([l,v])=>[l,Math.max(minTo,Math.min(maxTo,v))]);
-      body=`<div class="cs-turn"><b>Sıra sende</b><span>${need>0?`Call için <b>${fm(callAmt)}</b> gerekli`:'Bahis yok · pas geçebilirsin'} · <span id="on-clock"></span></span></div>
-        ${canRaise?`<div class="cs-raise"><div class="cs-pre">${pre.map(([l,v])=>`<button type="button" data-to="${v}">${l}<small>${fm(v)}</small></button>`).join('')}</div>
-          <div class="cs-amt"><button type="button" class="cs-pm" data-d="-1" aria-label="Azalt">−</button><input type="range" id="on-rng" min="${minTo}" max="${maxTo}" step="1" value="${M.raiseTo}" aria-label="Bahis miktarı"><button type="button" class="cs-pm" data-d="1" aria-label="Arttır">+</button></div>
-          <div class="cs-eq" id="on-eq"></div></div>`:''}
-        <div class="cs-btns"><button class="act fold" id="on-fold">Çekil</button><button class="act call" id="on-call">${need===0?'Pas':(callAmt<need||callAmt===pl.stack?`All-in ${fm(callAmt)}`:`Call ${fm(callAmt)}`)}</button>${canRaise?`<button class="act raise" id="on-raise">${M.raiseTo>=maxTo?'All-in '+fm(maxTo):(p.current===0?'Bahis ':'Raise ')+fm(M.raiseTo)}</button>`:''}</div>`;
-    }else if(p.phase==='el'){
-      const who=p.players[p.toAct];
-      body=`<div class="cs-turn"><b>${who?esc(who.ad):'…'}</b> sırada<span id="on-clock"></span></div>`;
-    }else if(p.phase==='bekle')body=`<p class="cs-sub">${M.host?'En az iki oyuncu gelince “Oyunu başlat”a bas.':'Oyunun başlamasını bekliyorsun.'}</p>`;
-    else body=`<p class="cs-sub">Yeni el birazdan başlıyor…</p>`;
-    e.innerHTML=mine+body;
-    const rng=document.getElementById('on-rng');
-    if(rng){
-      const upd=v=>{
-        const mn=+rng.min,mx=+rng.max;v=Math.max(mn,Math.min(mx,Math.round(+v||mn)));M.raiseTo=v;rng.value=v;
-        const b=document.getElementById('on-raise'),eq=document.getElementById('on-eq');
-        if(b)b.textContent=v>=mx?'All-in '+fm(mx):(p.current===0?'Bahis ':'Raise ')+fm(v);
-        if(eq)eq.textContent=`Kasandan ${fm(v-pl.bet)} gider · toplamda ${fm(v)} bahis`;
-      };
-      upd(M.raiseTo);rng.oninput=()=>upd(rng.value);
-      e.querySelectorAll('.cs-pre button').forEach(b=>b.onclick=()=>upd(b.dataset.to));
-      e.querySelectorAll('.cs-pm').forEach(b=>b.onclick=()=>upd(M.raiseTo+ +b.dataset.d));
+      st.innerHTML=(need>0?`Görmen gereken <b>${fm(callAmt)}</b> · Pot <b>${fm(p.pot)}</b>`:`Sıra sende · Pot <b>${fm(p.pot)}</b>`)+' · <span id="og-clock"></span>';
+      hum.hidden=false;
+      $o('#og-call').innerHTML=(need===0?'Kontrol':(callAmt<need||callAmt===pl.stack?`All-in ${fm(callAmt)}`:`Gör ${fm(callAmt)}`))+' <kbd>C</kbd>';
+      $o('#og-raise-box').hidden=!canRaise;$o('#og-raise').disabled=!canRaise;
+      M.act={minTo,maxTo,pot:p.pot,need,cur:p.current,word:p.current===0?'Bahis':'Artır'};
+      if(canRaise){
+        const amt=$o('#og-amt');amt.min=minTo;amt.max=maxTo;amt.step=1;
+        const def=p.street===0?(p.current<=2?6:p.current*3):p.current+Math.round((p.pot+need)*.6);
+        M.raiseTo=clampN(Math.round(def),minTo,maxTo);amt.value=M.raiseTo;
+        updRaise();
+      }else $o('#og-raise').innerHTML='Artır <kbd>R</kbd>';
+      return;
     }
+    if(p.phase==='el'){
+      const who=p.players[p.toAct];
+      st.innerHTML=(pl.folded?'Bu eli bıraktın. ':'')+`Sıra: <b>${who?esc(who.ad):'…'}</b> · <span id="og-clock"></span>`;
+    }else if(p.phase==='sonuc')st.innerHTML=`El #${p.hand} bitti. Fişin: <b>${fm(pl.stack)}</b> · <span id="og-next"></span>`;
+    else if(p.phase==='bekle')st.textContent=M.host?'En az iki oyuncu gelince “Oyunu başlat”a bas.':'Kurucunun oyunu başlatması bekleniyor.';
+    else st.textContent='Yeni el birazdan başlıyor…';
+    if(pl.waiting&&p.phase!=='bekle')st.textContent='Bir sonraki ele dahil olacaksın.';
     updateClock();
   }
+  function updRaise(){
+    const a=M&&M.act;if(!a)return;
+    const amt=$o('#og-amt'),v=clampN(Math.round(+amt.value||a.minTo),a.minTo,a.maxTo);
+    M.raiseTo=v;amt.value=v;
+    $o('#og-amt-out').textContent=v>=a.maxTo?'All-in':fm(v);
+    $o('#og-raise').innerHTML=(v>=a.maxTo?'All-in':`${a.word} ${fm(v)}`)+' <kbd>R</kbd>';
+  }
   function renderChat(){
-    const e=document.getElementById('on-msgs');if(!e||!M)return;
+    const e=$o('#og-msgs');if(!e||!M)return;
     const stick=e.scrollTop+e.clientHeight>=e.scrollHeight-30;
     e.innerHTML=M.chat.map(m=>`<li${m.uid===B().uid?' class="mine"':''}><b>${esc(m.ad)}</b> ${esc(m.m)}</li>`).join('')||'<li class="muted">Henüz mesaj yok.</li>';
     if(stick)e.scrollTop=e.scrollHeight;
   }
   function updateClock(){
     if(!M||!M.pub)return;
-    const p=M.pub,c=document.getElementById('on-clock');
+    const p=M.pub,c=document.getElementById('og-clock');
     if(c&&p.phase==='el'&&p.sure){const s=Math.max(0,Math.ceil((p.sure-Date.now())/1000));c.textContent=`${s} sn`;c.className=s<=8?'on-late':'';}
-    const nx=document.getElementById('on-next');
+    const nx=document.getElementById('og-next');
     if(nx&&p.sonSure){const s=Math.max(0,Math.ceil((p.sonSure-Date.now())/1000));nx.textContent=`Yeni el ${s} sn içinde`;}
   }
+  function ownSay(text){
+    const b=$o('#og-say-me');b.textContent=text;b.hidden=false;clearTimeout(M&&M.sayT);
+    if(M)M.sayT=setTimeout(()=>{b.hidden=true;},4000);
+  }
+
 
   /* ---------- Olaylar ---------- */
   root.addEventListener('click',e=>{
@@ -545,25 +580,43 @@
     const tt=t.closest('[data-t]');if(tt&&view==='kur'){readKur();draft.turSn=+tt.dataset.t;renderKur();return;}
     if(t.closest('#k-back')){renderLobi();listenLobby();return;}
     if(t.closest('#k-go')){createTable();return;}
-    if(t.closest('#on-leave')){
-      openModal(`<h3>${M&&M.host?'Masayı kapat?':'Masadan kalk?'}</h3><p>${M&&M.host?'Masayı kuran sensin: kapatırsan masa herkes için biter ve bilgiler silinir.':'Elin sürüyorsa çekilmiş sayılırsın.'}</p><div class="row"><button class="btn ghost" id="lv-no">Vazgeç</button><button class="btn" id="lv-yes">Evet</button></div>`);
-      $('#lv-no').onclick=closeModal;$('#lv-yes').onclick=()=>{closeModal();leaveTable();};return;
-    }
-    if(t.closest('#on-start')){if(M&&M.host){M.engine.newHand();publish();}return;}
-    if(t.closest('#on-fold')){sendAction('fold');return;}
-    if(t.closest('#on-call')){sendAction('call');return;}
-    if(t.closest('#on-raise')){sendAction('raise',M.raiseTo);return;}
-    if(t.closest('#on-rebuy')){sitOrRebuy();return;}
-    const kk=t.closest('[data-kick]');
-    if(kk&&M&&M.host){const uid=kk.dataset.kick;M.banned.add(uid);M.engine.removePlayer(uid);publish();toast('Oyuncu çıkarıldı','Bu masaya tekrar katılamaz.');return;}
-    const q=t.closest('[data-q]');if(q){sendChat(q.dataset.q);return;}
-  });
-  root.addEventListener('submit',e=>{
-    if(e.target.id==='on-form'){e.preventDefault();const i=document.getElementById('on-in');sendChat(i.value);i.value='';}
   });
   root.addEventListener('input',e=>{
     if(e.target.id==='on-ad')lsSet(KAD,e.target.value.trim().slice(0,16));
     if(e.target.id==='k-ctl'&&view==='kur'){const v=+e.target.value;if(v>0){draft.chipTL=Math.min(100000,v);}}
+  });
+  og.addEventListener('click',e=>{
+    const t=e.target;
+    if(t.closest('#og-leave')){
+      openModal(`<h3>${M&&M.host?'Masayı kapat?':'Masadan kalk?'}</h3><p>${M&&M.host?'Masayı kuran sensin: kapatırsan masa herkes için biter ve bilgiler silinir.':'Elin sürüyorsa çekilmiş sayılırsın.'}</p><div class="row"><button class="btn ghost" id="lv-no">Vazgeç</button><button class="btn" id="lv-yes">Evet</button></div>`);
+      $('#lv-no').onclick=closeModal;$('#lv-yes').onclick=()=>{closeModal();leaveTable();};return;
+    }
+    if(!M)return;
+    if(t.closest('#og-start')){if(M.host){M.engine.newHand();publish();}return;}
+    if(t.closest('#og-fold')){sendAction('fold');return;}
+    if(t.closest('#og-call')){sendAction('call');return;}
+    if(t.closest('#og-raise')){if(!$o('#og-raise').disabled)sendAction('raise',M.raiseTo);return;}
+    const pr=t.closest('[data-p]');
+    if(pr&&M.act){
+      const x=M.act,mp={min:x.minTo,half:x.cur+Math.round((x.pot+x.need)/2),tq:x.cur+Math.round((x.pot+x.need)*.75),pot:x.cur+x.pot+x.need,all:x.maxTo};
+      $o('#og-amt').value=clampN(mp[pr.dataset.p],x.minTo,x.maxTo);updRaise();return;
+    }
+    if(t.closest('#og-rebuy')){sitOrRebuy();return;}
+    const kk=t.closest('[data-kick]');
+    if(kk&&M.host){const uid=kk.dataset.kick;M.banned.add(uid);M.engine.removePlayer(uid);publish();toast('Oyuncu çıkarıldı','Bu masaya tekrar katılamaz.');return;}
+    const q=t.closest('[data-q]');if(q){sendChat(q.dataset.q);$o('#og-emote-list').hidden=true;return;}
+    if(t.closest('#og-emote-open')){const l=$o('#og-emote-list');l.hidden=!l.hidden;$o('#og-emote-open').setAttribute('aria-expanded',String(!l.hidden));if(!l.hidden)setTimeout(()=>{const i=$o('#og-in');if(i)i.focus();},30);return;}
+    if(t.closest('#og-sound')){SAVE.settings.sound=SAVE.settings.sound===false;persist();if(typeof applySettings==='function')applySettings();$o('#og-sound').setAttribute('aria-pressed',SAVE.settings.sound!==false);sfx('deal');return;}
+    if(t.closest('#og-settings')){if(typeof openSettings==='function')openSettings();return;}
+  });
+  og.addEventListener('input',e=>{if(e.target.id==='og-amt')updRaise();});
+  og.addEventListener('submit',e=>{
+    if(e.target.id==='og-form'){e.preventDefault();const i=$o('#og-in');sendChat(i.value);i.value='';$o('#og-emote-list').hidden=true;}
+  });
+  document.addEventListener('keydown',e=>{
+    if(og.hidden||!M||!M.act||$o('#og-human').hidden||(e.target.matches&&e.target.matches('input,textarea')))return;
+    const k=(e.key||'').toLowerCase();
+    if(k==='f')sendAction('fold');else if(k==='c')sendAction('call');else if(k==='r'&&!$o('#og-raise').disabled)sendAction('raise',M.raiseTo);
   });
   window.addEventListener('beforeunload',()=>{if(M&&M.host&&F()){try{F().updateDoc(mdoc(M.id),{durum:'bitti'});}catch(e){}}});
 
@@ -584,10 +637,12 @@
     };
     if(uyariVar())go();else uyariGoster(go);
   }
-  new MutationObserver(()=>{
-    if(!scr.hidden)enter();
-    else{stopLobby();clearInterval(pollT);if(M)leaveTable(true);view='lobi';}
-  }).observe(scr,{attributes:true,attributeFilter:['hidden']});
+  const mo=new MutationObserver(()=>{
+    if(!scr.hidden){enter();return;}
+    if(!og.hidden)return;                         // lobiden oyun ekranına geçildi
+    stopLobby();clearInterval(pollT);if(M)leaveTable(true);view='lobi';
+  });
+  mo.observe(scr,{attributes:true,attributeFilter:['hidden']});mo.observe(og,{attributes:true,attributeFilter:['hidden']});
   const go=document.getElementById('go-online');if(go)go.onclick=()=>show('scr-online');
   window.VYOnline={leave:()=>leaveTable(true)};
 })();

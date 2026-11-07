@@ -125,6 +125,60 @@
   </div>
 </section>
 
+<section id="scr-ogame" class="screen game v3on" hidden>
+  <header class="g-top">
+    <button class="btn ghost small" id="og-leave">← Kalk</button>
+    <div class="g-title"><b id="og-name"></b><span id="og-info"></span></div>
+    <div class="g-goal"><span id="og-goal-txt"></span><span class="goalbar"><i id="og-goal-bar"></i></span></div>
+    <span class="me-chip" data-ava="36" title="Sen"></span>
+    <button class="icon-btn" id="og-sound" aria-pressed="true" aria-label="Ses" title="Sesi aç/kapat"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="mute" d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <button class="icon-btn" id="og-settings" aria-label="Ayarlar" title="Ayarlar (parlaklık, grafik, görünüm)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M5.5 18.5l1.8-1.8M16.7 7.3l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </header>
+  <div class="g-main">
+    <div class="table-area">
+      <div id="on-2d" class="on-2d"></div>
+      <div class="v3" id="on-v3">
+        <div class="v3-labels"></div>
+        <div class="v3-board" id="ov3-board" aria-label="Ortadaki kartlar ve pot"></div>
+        <div class="v3-me" id="ov3-me" aria-live="polite"></div>
+        <div class="v3-fade" aria-hidden="true"></div>
+        <div class="v3-title" aria-hidden="true"></div>
+        <div class="v3-help"><span class="h-mouse">Sürükle ya da A/D: etrafına bak</span><span class="h-mouse">Tekerlek: yakınlaş</span><span class="h-mouse">Oyuncuya tıkla: odaklan</span><span class="h-touch">Kaydır: etrafına bak</span><span class="h-touch">İki parmak: yakınlaş</span><span class="h-touch">Oyuncuya dokun: odaklan</span></div>
+        <div class="banner on-banner" id="og-banner" hidden></div>
+      </div>
+      <div class="emotes" id="og-emotes">
+        <div class="emote-list on-emote" id="og-emote-list" hidden>
+          <button type="button" data-q="Güzel el!">Güzel el!</button><button type="button" data-q="Hadi bakalım.">Hadi bakalım.</button><button type="button" data-q="Şanslısın.">Şanslısın.</button><button type="button" data-q="İyi oyun!">İyi oyun!</button>
+          <form id="og-form" class="on-send"><input type="text" id="og-in" maxlength="140" autocomplete="off" placeholder="İstediğini yaz…" aria-label="Mesaj"><button class="btn small" type="submit">Gönder</button></form>
+        </div>
+        <button type="button" class="emote-btn" id="og-emote-open" aria-expanded="false" title="Masada konuş"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 5h16v11H11l-5 4v-4H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Konuş</button>
+      </div>
+      <div class="say-me" id="og-say-me" hidden></div>
+    </div>
+    <aside class="g-side">
+      <section class="panel" id="og-players"><div class="p-head"><span>Masadakiler</span></div><ul id="og-plist" class="on-plist"></ul></section>
+      <section class="panel on-chat"><div class="p-head"><span>Masa sohbeti</span></div><ol id="og-msgs"></ol></section>
+      <details class="panel" id="og-log"><summary class="p-head">El geçmişi</summary><ol id="og-loglist" class="log-list"></ol></details>
+    </aside>
+  </div>
+  <footer class="actions" id="og-actions">
+    <div class="a-status" id="og-status"></div>
+    <div class="a-human" id="og-human" hidden>
+      <div class="a-raise" id="og-raise-box">
+        <div class="presets"><button data-p="min">Min</button><button data-p="half">½ Pot</button><button data-p="tq">¾ Pot</button><button data-p="pot">Pot</button><button data-p="all">All-in</button></div>
+        <div class="slider"><input type="range" id="og-amt" aria-label="Bahis miktarı"><output id="og-amt-out" for="og-amt"></output></div>
+      </div>
+      <div class="a-btns">
+        <button class="act fold" id="og-fold">Çekil <kbd>F</kbd></button>
+        <button class="act call" id="og-call">Kontrol <kbd>C</kbd></button>
+        <button class="act raise" id="og-raise">Artır <kbd>R</kbd></button>
+      </div>
+    </div>
+    <button class="btn" id="og-rebuy" hidden>Yeniden al</button>
+    <button class="btn" id="og-start" hidden>Oyunu başlat</button>
+  </footer>
+</section>
+
 <section id="scr-game" class="screen game" hidden>
   <header class="g-top">
     <button class="btn ghost small" id="g-leave">← Kalk</button>
