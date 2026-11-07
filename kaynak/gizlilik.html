@@ -46,6 +46,14 @@ a{color:var(--gold)}
 </ul>
 <p><b>Liderlik tablosuna katılırsan (isteğe bağlı):</b> seçtiğin takma ad, cüzdanındaki toplam para, oynadığın el sayısı, fethettiğin masa sayısı ve şampiyonluk sayın, giriş yapmış diğer oyunculara görünür. Adın, e-postan ve fotoğrafın görünmez. Tablodan çıkınca bu satır silinir. Takma adına gerçek adını, telefonunu ya da başkasına ait bilgi yazma.</p>
 
+<p><b>Online masalara katılırsan (isteğe bağlı):</b></p>
+<ul>
+<li>Seçtiğin takma ad, karakterin (görünüm ayarların), masadaki çip miktarın ve hamlelerin masadaki diğer oyunculara görünür. Gerçek adın, e-postan ve fotoğrafın görünmez.</li>
+<li><b>Masaya yazdığın mesajlar</b> (masa sohbeti ve masa karşılama mesajı) masadaki ve masa listesine bakan giriş yapmış herkese görünür. Kişisel bilgi yazmamanı öneririz.</li>
+<li>Masa bilgileri, kartlar, hamleler ve mesajlar Firebase Firestore'da <code>vegasMasa</code> koleksiyonunda tutulur. Masayı kuran oyuncu masayı kapatınca bu belgeleri siler; kurucu bağlantısını yitirirse silme işlemi bir sonraki girişinde yapılır. Bu süre içinde belgeler masa sahibi ve katılanlar tarafından okunabilir.</li>
+<li>Oyunu masayı kuran oyuncunun tarayıcısı yönetir; kurucu masadaki bütün kartları görebilecek konumdadır. Yalnızca tanıdığın kişilerle oynamanı öneririz. Kurucu, kurallara uymayan oyuncuları masadan çıkarabilir.</li>
+</ul>
+
 <h2>Üçüncü taraflar</h2>
 <ul>
 <li><b>Google / Firebase:</b> giriş ve kayıt saklama. <a href="https://policies.google.com/privacy" rel="noopener">Google gizlilik politikası</a>.</li>
@@ -56,6 +64,7 @@ a{color:var(--gold)}
 
 <h2>Verilerin üzerindeki haklarının kullanımı</h2>
 <ul>
+<li><b>Online masa verisi:</b> mesajlarının ya da masa kayıtlarının silinmesini istersen aşağıdaki iletişimden yaz; ayrıca masadan kalkınca katılma kaydın silinmek üzere işaretlenir.</li>
 <li><b>Liderlik satırı:</b> oyunda Liderlik → "Tabloda görün" anahtarını kapat. Satır silinir.</li>
 <li><b>Yerel kayıt:</b> tarayıcı verilerini temizlediğinde cihazdaki kayıt silinir.</li>
 <li><b>Hesaptaki kayıt ve giriş verisi:</b> silinmesini ya da bir kopyasını istersen aşağıdaki iletişimden yaz; hesap kimliğinle ilişkili kayıtlar silinir.</li>

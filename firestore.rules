@@ -23,5 +23,51 @@ service cloud.firestore {
         && request.resource.data.t == request.time
         && (resource == null || request.time > resource.data.t + duration.value(20, 's'));
     }
+
+    // Online masalar: masayı kuran oyuncu (kurucu) oyunu yönetir. Herkese açık durum masa belgesinde,
+    // oyuncunun kendi kartları el/{uid} altında yalnızca kendisi ve kurucu tarafından okunur.
+    match /vegasMasa/{mid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.kurucu == request.auth.uid
+        && request.resource.data.ad is string && request.resource.data.ad.size() <= 30
+        && request.resource.data.kurucuAd is string && request.resource.data.kurucuAd.size() <= 16
+        && request.resource.data.mesaj is string && request.resource.data.mesaj.size() <= 140
+        && request.resource.data.maxKoltuk is number && request.resource.data.maxKoltuk >= 2 && request.resource.data.maxKoltuk <= 9
+        && request.resource.data.baslangic is number && request.resource.data.baslangic >= 10 && request.resource.data.baslangic <= 10000
+        && request.resource.data.chipTL is number && request.resource.data.chipTL >= 1 && request.resource.data.chipTL <= 100000;
+      allow update, delete: if request.auth != null && resource.data.kurucu == request.auth.uid;
+
+      function kurucu(mid) {
+        return get(/databases/$(database)/documents/vegasMasa/$(mid)).data.kurucu == request.auth.uid;
+      }
+
+      // Oyuncunun elindeki kartlar: yazan yalnızca kurucu.
+      match /el/{uid} {
+        allow read: if request.auth != null && (request.auth.uid == uid || kurucu(mid));
+        allow write: if request.auth != null && kurucu(mid);
+      }
+      // Hamle: oyuncu kendi belgesine yazar, kurucu okur.
+      match /hamle/{uid} {
+        allow create, update: if request.auth != null && request.auth.uid == uid;
+        allow read, delete: if request.auth != null && (request.auth.uid == uid || kurucu(mid));
+      }
+      // Katılma / kalkma isteği
+      match /katil/{uid} {
+        allow create, update, delete: if request.auth != null && (request.auth.uid == uid || kurucu(mid));
+        allow read: if request.auth != null && (request.auth.uid == uid || kurucu(mid));
+      }
+      // Masa sohbeti: en çok 140 karakter, yazar kendi adıyla yazar; silmek kurucuya ait.
+      match /mesaj/{msg} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+          && request.resource.data.keys().hasOnly(['uid','ad','m','t'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.ad is string && request.resource.data.ad.size() <= 16
+          && request.resource.data.m is string && request.resource.data.m.size() >= 1 && request.resource.data.m.size() <= 140
+          && request.resource.data.t == request.time;
+        allow delete: if request.auth != null && kurucu(mid);
+      }
+    }
   }
 }

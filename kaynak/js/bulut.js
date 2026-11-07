@@ -148,6 +148,8 @@
     get hazir(){return !!fb;},
     get giris(){return !!uid;},
     get uid(){return uid;},
+    get fb(){return fb;},
+    get db(){return db;},
     get ad(){return user?(user.displayName||'').split(' ')[0]:'';},
     liderYolla,liderKaldir,liderListe,
     girisYap:()=>btn.click(),

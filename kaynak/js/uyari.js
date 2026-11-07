@@ -2,7 +2,7 @@
 // Giriş uyarıları: 1) +18 ve eğlence/rekabet bildirimi, 2) KVKK aydınlatma.
 // +18 onayı her yeni oturumda, KVKK onayı bir kez (cihazda) sorulur.
 (function(){
-  var KVKK_SURUM='1';
+  var KVKK_SURUM='2';
   function oku(depo,k){try{return window[depo].getItem(k);}catch(e){return null;}}
   function yaz(depo,k,v){try{window[depo].setItem(k,v);}catch(e){}}
 
@@ -47,6 +47,7 @@
       '<li>Google ile giriş yaparsan ad, e-posta ve profil bilgin ile oyun ilerlemen (fiş, başarım, istatistik) kaydın cihazlar arasında sürmesi için saklanır.</li>'+
       '<li>Veriler yalnızca oyun deneyimini sağlamak ve ilerlemeni eşitlemek amacıyla işlenir; üçüncü kişilere satılmaz ya da reklam için paylaşılmaz.</li>'+
       '<li>Cihazında tercihlerini hatırlamak için yerel depolama kullanılır.</li>'+
+      '<li><b>Online mod:</b> online masaya katılırsan takma adın, karakterin, çip miktarın, hamlelerin ve masaya yazdığın mesajlar masadaki diğer oyunculara görünür ve masa açık kaldığı sürece sunucuda tutulur; masa kapanınca silinir. Mesajlarda kişisel bilgi paylaşma. Online mod isteğe bağlıdır, yalnızca eğlence ve rekabet içindir ve gerçek para içermez.</li>'+
       '<li>Verilerinin silinmesini, düzeltilmesini veya bir kopyasını istemek dahil KVKK madde 11 haklarını kullanabilirsin.</li>'+
       '</ul>'+
       (web?'<p>Ayrıntılar için <a href="gizlilik.html" target="_blank" rel="noopener">Gizlilik ve kullanım</a> sayfasına bak.</p>':'')+
