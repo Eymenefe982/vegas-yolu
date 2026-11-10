@@ -62,6 +62,7 @@ function startSide(t,opt={}){
   }
   if(paid){SAVE.cash-=entryTL(t);persist();}
   C={t,chips:t.game==='batak'?0:t.buy,paid,rl:repLvl(t),settled:false,done:false,tok:{},inPlay:0,busy:false,chip:t.min,bet:{},hist:[],last:null,rounds:0,v3:USE3D(),fromHall:!!opt.fromHall,bots:sideBots(t)};
+  if(paid)persist();   // masadaki fiş kayda geçsin: sayfa yenilenirse cüzdana döner
   const sc=$('#scr-casino');sc.dataset.venue=t.V.id;sc.dataset.game=t.game;
   $('#c-name').textContent=`${t.name} · ${t.V.name}`;
   $('#c-info').textContent=`${t.V.place}${t.game==='batak'?'':' · Min. bahis '+fmtM(t.min,t.cur)}${C.rl?' · '+REP[C.rl].t:''}`;

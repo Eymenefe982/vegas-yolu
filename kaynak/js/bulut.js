@@ -53,6 +53,7 @@
   function apply(data,t){
     const keep=SAVE.settings;
     SAVE=mergeSave(data);SAVE.settings=keep;SAVE.t=t||Date.now();
+    refundTable();   // başka cihazda yarım kalmış masanın fişi cüzdana döner (burada masada değilsen)
     delete SAVE._old;
     _fp=saveFP();
     try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}

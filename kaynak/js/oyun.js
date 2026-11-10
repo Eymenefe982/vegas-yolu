@@ -22,11 +22,37 @@ function loadSave(){
   return defSave();
 }
 let SAVE=loadSave();
+/* Masadaki fiş kayıtta da durur (SAVE.masa, ₺ karşılığı): sayfa yenilenir, sekme kapanır ya da uygulama öldürülürse
+   giriş ücreti boşa gitmez; bir sonraki açılışta cüzdana döner. Kalkınca alacağın tutarla aynıdır:
+   ortadaki bahis, bitmemiş turnuva ve bitmemiş batak iade edilmez; serbest modda bir şey tutulmaz. */
+function atTable(){try{return !!((G&&!G.settled)||(C&&!C.settled));}catch(e){return false;}}
+function tableStake(){
+  try{
+    if(G&&!G.settled&&G.paid){const open=G.venue.tourney&&!G.players.every(p=>p.human||p.out);return open?0:Math.round(toTL(G.players[0].chips,G.venue.cur));}
+    if(C&&!C.settled&&C.paid)return C.t.game==='batak'&&!C.done?0:Math.round(toTL(Math.max(0,C.chips-C.inPlay),C.t.cur));
+  }catch(e){}
+  return 0;
+}
+function refundTable(){
+  if(atTable()||!(SAVE.masa>0))return 0;
+  const a=SAVE.masa;SAVE.cash=(SAVE.cash||0)+a;SAVE.masa=0;return a;
+}
+{
+  const iade=refundTable();
+  if(iade>0){
+    try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}
+    // açılış uyarıları (+18, KVKK) kapanınca haber ver
+    const say=()=>{if(document.querySelector('.uy-ov')){setTimeout(say,800);return;}try{toast('Yarım kalan masa',`Masada bıraktığın ${tl(iade)} cüzdanına döndü. Cüzdan: ${tl(SAVE.cash)}`,'info');}catch(e){}};
+    setTimeout(say,1200);
+  }
+}
+addEventListener('pagehide',()=>{if(atTable())persist();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&atTable())persist();});
 // Web sürümünde Google ile giriş yapılmışsa js/bulut.js kayıt değişikliklerini buluta da yollar.
 // İlerleme parmak izi: yalnızca gerçek ilerleme (para, el, ders, avatar…) değişince SAVE.t yenilenir; ayar değişikliği bulutta çakışma sayılmaz.
-const saveFP=()=>{const s=SAVE||{};return [s.stats&&s.stats.hands,Math.round(s.cash||0),(s.conquered||[]).length,(s.seen||[]).length,Object.keys(s.ach||{}).length,s.daily&&s.daily.last,s.weekly&&s.weekly.k,JSON.stringify(s.avatar||0),JSON.stringify(s.lider||0)].join('|');};
+const saveFP=()=>{const s=SAVE||{};return [s.stats&&s.stats.hands,Math.round(s.cash||0),Math.round(s.masa||0),(s.conquered||[]).length,(s.seen||[]).length,Object.keys(s.ach||{}).length,s.daily&&s.daily.last,s.weekly&&s.weekly.k,JSON.stringify(s.avatar||0),JSON.stringify(s.lider||0)].join('|');};
 let _fp=saveFP();
-function persist(){const f=saveFP();if(f!==_fp||!SAVE.t){_fp=f;SAVE.t=Date.now();}try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}if(window.onPersist)window.onPersist();}
+function persist(){SAVE.masa=tableStake();const f=saveFP();if(f!==_fp||!SAVE.t){_fp=f;SAVE.t=Date.now();}try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}if(window.onPersist)window.onPersist();}
 
 /* ================= Ses (Web Audio ile sentezlenir) ================= */
 const SFX=(()=>{
@@ -607,6 +633,7 @@ function startGame(venue,opt){
   venue.rivals.forEach(([n,s])=>players.push({name:n,human:false,style:s,prof:STYLES[s],char:CHARS[n]||{}}));
   players.forEach((p,i)=>Object.assign(p,{idx:i,chips:venue.buy,cards:[],bet:0,total:0,folded:false,allIn:false,inHand:false,out:false,show:false,won:0,lastAct:'',actCls:'',tilt:0,notes:[]}));
   G={venue,players,tok:{},dealer:Math.floor(rnd()*players.length),handNo:0,deck:[],board:[],pot:0,curBet:0,minRaise:venue.bb,sb:venue.levels?venue.levels[0][0]:venue.sb,bb:venue.levels?venue.levels[0][1]:venue.bb,ante:venue.ante||0,unit:venue.unit||venue.sb,lvlN:0,streak:0,meRaised:false,nRaises:0,street:0,turn:-1,phase:'idle',winSet:null,hs:{hands:0,raises:0,calls:0},lastAgg:null,resolve:null,reject:null,nextResolve:null,noteSeen:new Set(),paid,rl,settled:false};
+  if(paid)persist();   // masadaki fiş hemen kayda geçsin (ilk el dağıtılmadan yenilenirse giriş yanmasın)
   G.v3=Sahne.ok&&SAVE.settings.view!=='2d';G.fromHall=!!(opt&&opt.fromHall)&&G.v3;
   if(rl)setTimeout(()=>{if(G&&G.venue===venue)toast(`Masa seni tanıdı · ${REP[rl].t}`,REP[rl].d,'info');},1200);
   const sg=$('#scr-game');
@@ -800,7 +827,7 @@ async function playHand(tok){
     for(const p of seated){const a=Math.min(g.ante,p.chips);p.chips-=a;p.total+=a;g.pot+=a;if(p.chips===0)p.allIn=true;}
     addLog(`Ante: herkes ${money(g.ante)} koydu`);SFX.play('chip',3);render();await wait(tok,g.v3?400:200);
   }
-  commit(sb,g.sb);sb.lastAct='SB';commit(bb,g.bb);bb.lastAct='BB';SFX.play('chip',2);
+  commit(sb,g.sb);sb.lastAct='SB';commit(bb,g.bb);bb.lastAct='BB';SFX.play('chip',2);persist();
   addLog(`${sb.name} küçük kör: ${money(sb.bet)}`);
   addLog(`${bb.name} büyük kör: ${money(bb.bet)}`);
   g.curBet=g.bb;g.minRaise=g.bb;
@@ -907,6 +934,7 @@ function applyAction(p,a){
     }
   }
   p.lastAct=txt;p.actCls=cls;
+  if(p.human)persist();   // koyduğun bahis kayda da işlensin: yenileyerek geri alınamaz
   if(a.type==='fold')SFX.play('fold');
   else if(a.type==='check')SFX.play('check');
   else if(p.allIn)SFX.play('allin');
