@@ -732,7 +732,8 @@ function render(){
       g._mk=mk;
       const has=me.inHand&&me.cards.length===2&&!me.folded;
       const hd=has?(g.board.length>=3?describe(evalCards(me.cards.concat(g.board))):preflopName(me.cards)):'';
-      $('#v3-me').innerHTML=has?`<div class="cards">${me.cards.map(c=>cardHTML(c,g.winSet?(g.winSet.has(c)?'win':'dim'):'')).join('')}</div><span>${hd}</span>`:(me.folded&&me.inHand?'<span class="muted">Çekildin</span>':'');
+      const mc=me.out?'':`<small class="mc">Fişin ${money(me.chips)}</small>`;
+      $('#v3-me').innerHTML=has?`<div class="cards">${me.cards.map(c=>cardHTML(c,g.winSet?(g.winSet.has(c)?'win':'dim'):'')).join('')}</div><span>${hd}${mc}</span>`:(me.folded&&me.inHand?`<span><span class="muted">Çekildin</span>${mc}</span>`:(mc?`<span>${mc}</span>`:''));
     }
     // Ortadaki kartlar ve pot üstte de: 3D'de ışık, açı ya da bakış yönü ne olursa olsun okunur kalsın
     const hud=SAVE.settings.boardHud!==false,pt=potTotal();
@@ -819,7 +820,7 @@ async function playHand(tok){
     if(st>0){
       collectBets();
       const cnt=st===1?3:1;
-      g.players.forEach(p=>{if(!p.allIn||p.folded){p.lastAct='';p.actCls='';}});
+      g.players.forEach(p=>{if(!p.allIn&&!p.folded){p.lastAct='';p.actCls='';}});   // çekilenin "Çekildi" yazısı el bitene kadar kalır
       g.curBet=0;g.minRaise=g.bb;g.nRaises=0;
       render();await wait(tok,350);
       for(let k=0;k<cnt;k++){g.board.push(g.deck.pop());render();SFX.play('flip');if(k<cnt-1)await wait(tok,130);}

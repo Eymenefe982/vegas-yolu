@@ -1592,7 +1592,7 @@ function start(G,el,opt={}){
       attachProps(P,S,p.char||{});P.init();
       P.stand=1;P.standT=1;P.sitAt=W.t+.5+R()*2;   // salona girerken herkes ayakta; sen yaklaşırken oturur
       S.person=P;W.people[i]=P;
-      const lb=document.createElement('div');lb.className='p3';lb.innerHTML='<b class="n"></b><span class="c"></span><em class="a"></em><span class="h"></span><span class="say"></span>';lb.querySelector('.n').textContent=p.name;
+      const lb=document.createElement('div');lb.className='p3';lb.innerHTML='<b class="n"></b><span class="c"></span><em class="a"></em><span class="k cards"></span><span class="h"></span><span class="say"></span>';lb.querySelector('.n').textContent=p.name;
       lb.addEventListener('click',()=>{if(cam.focus===i)resetView();else focusOn(i);});
       labelsEl.appendChild(lb);S.label=lb;S.lt='';
     }else if(setting('body',true)&&typeof avaDef==='function'){
@@ -1752,6 +1752,23 @@ function updLabels(){
     const hb=hud.offsetTop+hud.offsetHeight+4,hl=hud.offsetLeft-hud.offsetWidth/2,hr=hl+hud.offsetWidth;   // gösterge translate:-50% ile ortalı
     W.seats.forEach(S=>{if(!S.label||S.off||S.lx==null)return;const lw=S.label.offsetWidth/2,lh=S.label.offsetHeight;if(S.ly-lh<hb&&S.lx+lw>hl&&S.lx-lw<hr)S.ly=hb+lh;});
   }
+  // el sonu afişi de aynı şekilde: kazananın plakası afişin altına iner, üst üste binmez
+  const bn=host.querySelector('.banner');
+  if(bn&&!bn.hidden&&bn.offsetHeight){
+    const bb=bn.offsetTop+bn.offsetHeight+6,bl=bn.offsetLeft-bn.offsetWidth/2,br=bl+bn.offsetWidth;
+    W.seats.forEach(S=>{if(!S.label||S.off||S.lx==null)return;const lw=S.label.offsetWidth/2,lh=S.label.offsetHeight;if(S.ly-lh<bb&&S.ly>bn.offsetTop&&S.lx+lw>bl&&S.lx-lw<br)S.ly=bb+lh;});
+  }
+  // konuşma balonu plakanın üstünde durur; üstte yer yoksa (kart/pot göstergesi, afiş, ekran kenarı) yana ya da alta geçer
+  const tops=[hud,bn].filter(e=>e&&!e.hidden&&e.offsetHeight).map(e=>({b:e.offsetTop+e.offsetHeight,l:e.offsetLeft-e.offsetWidth/2,r:e.offsetLeft+e.offsetWidth/2}));
+  W.seats.forEach(S=>{
+    const lb=S.label;if(!lb||S.off||S.lx==null)return;const se=S.sayEl||(S.sayEl=lb.querySelector('.say'));if(!se)return;
+    let mode='';
+    if(se.textContent){
+      const sw=se.offsetWidth/2,sh=se.offsetHeight+17,lw=lb.offsetWidth/2,top=S.ly-lb.offsetHeight-sh;
+      if(top<4||tops.some(o=>top<o.b+2&&S.lx+sw>o.l&&S.lx-sw<o.r))mode=S.lx+lw+14+sw*2<w-6?'r':(S.lx-lw-14-sw*2>6?'l':'d');
+    }
+    if(mode!==S.sayMode){S.sayMode=mode;lb.classList.toggle('say-r',mode==='r');lb.classList.toggle('say-l',mode==='l');lb.classList.toggle('say-d',mode==='d');}
+  });
   // kenara itilen plakalar üst üste binmesin
   for(const side of[0,1]){
     const L=W.seats.filter(S=>S.label&&S.off&&S.lx!=null&&(S.lx<w/2)===!side).sort((a,b)=>a.ly-b.ly);
@@ -1847,12 +1864,16 @@ function labelText(S,p,G,i){
   const done=G.phase==='done';
   const chips=p.out?'Masadan kalktı':(p.allIn&&p.inHand&&!p.folded&&!done?'All-in':fmtM(p.chips,G.venue.cur));
   let hand='';if(p.show&&!p.folded&&p.inHand&&G.board.length===5)hand=describe(evalCards(p.cards.concat(G.board)));
-  const k=[chips,p.lastAct,p.actCls,hand,G.turn===i,p.folded&&p.inHand,done&&p.won>0,i===G.dealer].join('|');
+  // showdown'da açılan kartlar plakada da okunur: masadaki 3D kartlar uzaktan seçilmiyor
+  const open=p.show&&!p.folded&&p.inHand&&p.cards.length===2,ws=G.winSet;
+  const kk=open?p.cards.join(',')+(ws?'w'+p.cards.map(c=>ws.has(c)?1:0).join(''):''):'';
+  const k=[chips,p.lastAct,p.actCls,hand,G.turn===i,p.folded&&p.inHand,done&&p.won>0,i===G.dealer,kk].join('|');
   if(k===S.lt)return;S.lt=k;
   const lb=S.label;
   lb.querySelector('.c').textContent=chips;
   const a=lb.querySelector('.a');a.textContent=p.lastAct||'';a.className='a '+(p.actCls||'');
   lb.querySelector('.h').textContent=hand;
+  const ke=lb.querySelector('.k');if(ke)ke.innerHTML=open?p.cards.map(c=>cardHTML(c,ws?(ws.has(c)?'win':'dim'):'')).join(''):'';
   lb.classList.toggle('turn',G.turn===i);lb.classList.toggle('folded',p.folded&&p.inHand);lb.classList.toggle('winner',done&&p.won>0);lb.classList.toggle('dealer',i===G.dealer);
 }
 

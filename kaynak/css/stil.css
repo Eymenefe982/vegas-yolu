@@ -636,6 +636,28 @@ table.tells th{text-align:left!important}
 .p3 .say.on{opacity:1;translate:-50% 0}
 .p3 .say:empty{display:none}
 .p3.edge .say{display:none}
+/* balon üstte sığmıyorsa: yana (say-r / say-l) ya da alta (say-d) */
+.p3.say-r .say,.p3.say-l .say{bottom:auto;top:50%;left:calc(100% + 14px);translate:6px -50%}
+.p3.say-l .say{left:auto;right:calc(100% + 14px);translate:-6px -50%}
+.p3.say-r .say.on,.p3.say-l .say.on{translate:0 -50%}
+.p3.say-r .say::after{left:auto;right:100%;top:50%;translate:0 -50%;border-top-color:transparent;border-right-color:#f7f0e1}
+.p3.say-l .say::after{left:100%;top:50%;translate:0 -50%;border-top-color:transparent;border-left-color:#f7f0e1}
+.p3.say-d .say{bottom:auto;top:calc(100% + 34px);translate:-50% -6px}
+.p3.say-d .say.on{translate:-50% 0}
+.p3.say-d .say::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#f7f0e1}
+/* çekilen oyuncu: soluk plaka + kalıcı "Çekildi" rozeti (kenara itilmiş plakada da) */
+.p3.folded,.p3.edge.folded{opacity:.5}
+.p3.folded .c{color:#b9ac94}
+.p3.folded .n{text-decoration:line-through;text-decoration-color:rgba(246,238,221,.55)}
+/* showdown'da açılan kartlar plakada */
+.p3 .k{flex-wrap:nowrap;gap:4px;margin:4px 0 2px}
+.p3 .k:empty{display:none}
+.p3 .k .card{--w:30px}
+.p3 .k .card.win{transform:translateY(-6%)}
+.p3 .k .card.dim{filter:brightness(.82) saturate(.85)}
+/* köşedeki kendi kartlarının yanında fişin */
+.v3-me>span{display:grid;gap:1px}
+.v3-me .mc{font-size:12px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
 .s-say{position:absolute;left:50%;bottom:calc(100% + 6px);translate:-50% 4px;width:max-content;max-width:150px;padding:6px 10px;border-radius:11px;background:#f7f0e1;color:#16110c;font-size:11.5px;font-weight:700;line-height:1.25;text-align:center;white-space:normal;opacity:0;pointer-events:none;transition:opacity .25s,translate .25s;z-index:5}
 .s-say.on{opacity:1;translate:-50% 0}
 .s-say:empty{display:none}
