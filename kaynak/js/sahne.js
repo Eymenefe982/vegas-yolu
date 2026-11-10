@@ -1413,8 +1413,14 @@ function makeChair(style){
 }
 
 /* ---------- koltuk düzeni, kart, fiş, taşıma işleri ---------- */
-function seatAngles(n,casino){
-  if(!casino||(n-1)%2)return [...Array(n)].map((_,i)=>90+i*360/n);
+// Rakipler masanın karşı yayına toplanır (k<1): tam karşıya doğru sıkışırlar, böylece dönmeden görüş alanına girerler.
+// Ekran daraldıkça daha çok sıkışır; komşu koltuklar arası en az ~40 derece kalır.
+function seatK(n,host){
+  const a=host&&host.clientHeight?host.clientWidth/host.clientHeight:(camera?camera.aspect:1.6);
+  return Math.min(1,Math.max(a<.8?.45:a<1.45?.6:.8,40*n/360));
+}
+function seatAngles(n,casino,k=1){
+  if(!casino||(n-1)%2)return [...Array(n)].map((_,i)=>i?270+(90+i*360/n-270)*k:90);
   const M=n-1,G=62,d=(360-G)/M;return [90].concat([...Array(M)].map((_,k)=>90+d*(k+1)+(k+1>M/2?G-d:0)));
 }
 function seatFrame(deg,off=.36){
@@ -1525,7 +1531,7 @@ function initRenderer(){
   });
 }
 // Dar (dikey telefon) ekranda daha geniş açı: masa ve yan oyuncular sığsın
-const baseFov=()=>{const a=camera?camera.aspect:1.6;return a<.8?76:a<1.15?68:a<1.45?62:56;};
+const baseFov=()=>{const a=camera?camera.aspect:1.6;return a<.8?82:a<1.15?68:a<1.45?62:56;};
 const P0=()=>W&&W.pitch0!=null?W.pitch0:-.29,Y0=()=>(W&&W.yaw0)||0;
 function cine(i,dur=3,fov=30){
   if(!W||!W.ready||W.intro||cam.focus>0||cam.cine||W.t-cam.user<5||i<=0)return;
@@ -1575,7 +1581,7 @@ function start(G,el,opt={}){
   const base=[1,5,10,25,50,100,500,1000,5000,10000,25000,50000,100000,500000,1000000].filter(x=>x<=G.venue.buy/40).pop()||G.venue.sb;
   W.denoms=[Math.max(G.venue.sb,Math.round(base/5)),base,base*5];
   W.potPos=V3(0,TY,-.26);W.pot=makePile('pot',160);W.pot.g.position.copy(W.potPos);
-  const ang=seatAngles(G.players.length,V.casino);
+  const ang=seatAngles(G.players.length,V.casino,seatK(G.players.length,host));
   G.players.forEach((p,i)=>{
     const o=seatFrame(ang[i]);const S={o,p,cards:[],betAmt:0,cFold:false,cShow:false,human:!!p.human};
     const L=(x,y,z)=>o.localToWorld(V3(x,y,z));
@@ -2270,7 +2276,7 @@ function hall(spec,el){
   const tag=(g,key)=>{g.userData.hk=key;};
   // poker masası ortada, ana lambanın altında
   buildTable(V,{name:spec.name});tag(W.table,'poker');
-  const ang=seatAngles((spec.rivals||[]).length+1,V.casino);
+  const ang=seatAngles((spec.rivals||[]).length+1,V.casino,seatK((spec.rivals||[]).length+1));
   W.hall.push({key:'poker',g:W.table,top:V3(0,TY+.95,0),stand:seatFrame(90).localToWorld(V3(0,1.62,-.65)),look:V3(0,.9,0)});
   chairAt(seatFrame(90),V.chair);
   (spec.rivals||[]).forEach((p,k)=>{const o=seatFrame(ang[k+1]);chairAt(o,V.chair);const P=npcAt(p.char||{},o,{style:p.style,look:V3(0,TY,0)});attachProps(P,{o},p.char||{});});

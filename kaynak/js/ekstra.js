@@ -120,7 +120,8 @@ function renderWeekly(){
     </div>
     <div class="v-act">${act}</div></article>`;
   const wallet=host.querySelector('.wallet');
-  if(wallet)wallet.insertAdjacentHTML('afterend',html);else host.insertAdjacentHTML('afterbegin',html);
+  // Girebiliyorsan (ya da bu hafta oynadıysan) en üstte; paran yetmiyorsa listenin sonunda: yeni oyuncu önce oturabileceği masayı görsün
+  if(!ok&&!played)host.insertAdjacentHTML('beforeend',html);else if(wallet)wallet.insertAdjacentHTML('afterend',html);else host.insertAdjacentHTML('afterbegin',html);
   const b=$('#weekly-go');
   if(b)b.onclick=()=>{
     const wv=weeklyVenue();
@@ -479,7 +480,7 @@ function X_turnuva(){
     <li><b>Kısa fişli (short stack):</b> Çekilmesi, elenmek kadar kötüdür. Kendi açından hâlâ güçlü bir el yakaladığında koy.</li>
     <li><b>Çok fişli (chip leader):</b> Küçük fişlilere baskı kur, ama kendinden güçlüsüne karşı büyük potlardan kaçın.</li>
   </ul>
-  <div class="callout"><b>Haftalık Turnuva</b> Kariyer ekranının en üstünde. Hafta başına bir hak, giriş ${tl(WK_BUY)}. Birinci olan masadaki bütün fişleri alır ve ${tl(WK_PRIZE[0])} ek ödül kazanır.</div>`;
+  <div class="callout"><b>Haftalık Turnuva</b> Kariyer ekranında. Hafta başına bir hak, giriş ${tl(WK_BUY)}. Birinci olan masadaki bütün fişleri alır ve ${tl(WK_PRIZE[0])} ek ödül kazanır.</div>`;
 }
 const GLOS=[
   ['All-in','Bütün fişleri bahse koymak.'],['Ante','Her elde herkesin zorunlu koyduğu küçük bahis.'],['Blöf','Zayıf eli güçlüymüş gibi oynayıp rakibi çekilmeye zorlamak.'],
@@ -527,6 +528,6 @@ function X_sozluk(){
   renderNav=function(){
     rn0();
     const n=LESSONS.length,d=LESSONS.filter(l=>SAVE.seen.includes(l.id)).length;
-    const s=$('#learn-sum');if(s)s.innerHTML=`${d}/${n} tamamlandı <span class="lbar"><i style="width:${Math.round(d/n*100)}%"></i></span>`;
+    const s=$('#learn-sum');if(s)s.innerHTML=`${d}/${n} bölüm tamamlandı <span class="lbar"><i style="width:${Math.round(d/n*100)}%"></i></span>`;
   };
 }

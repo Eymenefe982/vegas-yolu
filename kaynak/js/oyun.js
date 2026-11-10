@@ -463,7 +463,7 @@ function renderMenu(){
   $('#stats').innerHTML=`<span><b>${tl(SAVE.cash)}</b>cüzdan</span><span><b>${nf.format(st.hands)}</b>oynanan el</span><span><b>${nf.format(st.won)}</b>kazanılan el</span><span><b>${SAVE.conquered.length}/${VENUES.length}</b>fethedilen masa</span><span><b>${st.best?fmtM(st.best,st.bestCur):'—'}</b>en büyük pot</span><span><b>${Ach.count()}/${Ach.list().length}</b>başarım</span>`;
   const next=VENUES.find(v=>!SAVE.conquered.includes(v.id));
   $('#career-cta').textContent=!next?'Bütün masalar fethedildi →':canAfford(next)?`Sıradaki masa: ${next.name} →`:`${next.name} için ${tl(entryTL(next)-SAVE.cash)} daha lazım →`;
-  $('#learn-cta').textContent=SAVE.seen.length?`Kaldığın yerden devam et (${Math.min(SAVE.seen.length,LESSONS.length)}/${LESSONS.length}) →`:'Derslere başla →';
+  $('#learn-cta').textContent=SAVE.seen.length?`Kaldığın yerden devam et (${Math.min(SAVE.seen.length,LESSONS.length)}/${LESSONS.length} bölüm) →`:'Derslere başla →';
   refreshAvatars();
 }
 $('#go-learn').onclick=()=>{show('scr-learn');const nx=LESSONS.find(l=>!SAVE.seen.includes(l.id));openLesson((nx||LESSONS[0]).id);};
@@ -1465,9 +1465,31 @@ function renderNav(){
   $$('#lnav [data-l]').forEach(b=>b.onclick=()=>openLesson(b.dataset.l));
   $('#learn-sum').textContent=`${LESSONS.filter(l=>SAVE.seen.includes(l.id)).length}/${LESSONS.length} tamamlandı`;
 }
+// Bölüm açılınca değil, sonuna gelince tamamlanmış sayılır: alttaki gezinme görünür olunca (en az 4 sn sonra) ya da "Sonraki"ye basınca
+let _lesObs=null;
+function markSeen(id){
+  if(SAVE.seen.includes(id))return;
+  SAVE.seen.push(id);persist();
+  for(const [g,a] of [['Dersler','egitim'],['Orta düzey','mit-orta'],['Üst düzey','mit-ust']]){
+    const L=LESSONS.filter(x=>x.g===g);if(L.length&&L.every(x=>SAVE.seen.includes(x.id)))Ach.unlock(a);
+  }
+  renderNav();
+}
+function watchLesson(id){
+  if(_lesObs){_lesObs.disconnect();_lesObs=null;}
+  const end=$('#lesson .les-nav');if(!end||SAVE.seen.includes(id))return;
+  const t0=Date.now();
+  end.querySelectorAll('[data-l2]').forEach(b=>b.addEventListener('click',()=>markSeen(id),true));
+  if(!('IntersectionObserver' in window)){markSeen(id);return;}
+  _lesObs=new IntersectionObserver(es=>{
+    if(!es.some(e=>e.isIntersecting))return;
+    _lesObs.disconnect();_lesObs=null;
+    setTimeout(()=>{if(LES===id&&!$('#scr-learn').hidden)markSeen(id);},Math.max(0,4000-(Date.now()-t0)));
+  });
+  _lesObs.observe(end);
+}
 function openLesson(id){
   LES=id;
-  if(!SAVE.seen.includes(id)){SAVE.seen.push(id);persist();}
   if(LESSONS.filter(x=>x.g==='Dersler').every(x=>SAVE.seen.includes(x.id)))Ach.unlock('egitim');
   const i=LESSONS.findIndex(l=>l.id===id),l=LESSONS[i];
   const prev=LESSONS[i-1],next=LESSONS[i+1];
@@ -1476,6 +1498,7 @@ function openLesson(id){
   $$('#lesson [data-l2]').forEach(b=>b.onclick=()=>{openLesson(b.dataset.l2);$('#lesson').scrollIntoView({behavior:'smooth',block:'start'});});
   renderNav();
   if(l.init)l.init();
+  watchLesson(id);
   const a=$('.lnav [aria-current="true"]');if(a&&a.scrollIntoView&&innerWidth<820)a.scrollIntoView({inline:'center',block:'nearest'});
 }
 function markCards(list,set){return list.map(c=>cardHTML(c,set?(set.has(c)?'win':'dim'):'')).join('');}

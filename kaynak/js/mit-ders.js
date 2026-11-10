@@ -477,7 +477,7 @@ const Mx_m=()=>xmShell('xm-m',xmM,XM.m,'Fiş, körler ve ante verildi. M oranın
   );
   // Menü açıklaması
   const d=document.querySelector('#go-learn .ch-d');
-  if(d)d.textContent=`${L.filter(l=>l.g!=='Alıştırmalar').length} ders üç düzeyde: başlangıç, orta ve üst. Orta ve üst düzey bölümler MIT'nin poker kuramı dersine dayanır. Pot oranı, push/fold ve blöf alıştırmaları, bitirme sınavı. Koç yalnızca alıştırma masalarında.`;
+  if(d)d.textContent=`${L.filter(l=>l.g!=='Alıştırmalar').length} ders ve ${L.filter(l=>l.g==='Alıştırmalar').length} alıştırma, üç düzeyde: başlangıç, orta ve üst. Orta ve üst düzey bölümler MIT'nin poker kuramı dersine dayanır. Pot oranı, push/fold ve blöf alıştırmaları, bitirme sınavı. Koç yalnızca alıştırma masalarında.`;
   // Gruplar ve başlıklar
   const rn0=renderNav;
   renderNav=function(){

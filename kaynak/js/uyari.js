@@ -1,5 +1,5 @@
 'use strict';
-// Giriş uyarıları: 1) +18 ve eğlence/rekabet bildirimi, 2) KVKK aydınlatma, 3) cihaz seçimi (telefon / tablet / bilgisayar).
+// Giriş uyarıları: 1) +18 ve eğlence/rekabet bildirimi, 2) KVKK aydınlatma. Cihaz (telefon / tablet / bilgisayar) tahmin edilir; Ayarlar'dan değişir.
 // +18 onayı her yeni oturumda, KVKK onayı bir kez (cihazda) sorulur.
 (function(){
   var KVKK_SURUM='2';
@@ -80,7 +80,7 @@
     set:function(v){v=uygula(v);yaz('localStorage','vy_cihaz',v);return v;},
     sor:cihazSor
   };
-  function cihaz(){if(!oku('localStorage','vy_cihaz'))cihazSor();}
+  function cihaz(){}   // cihaz açılışta sorulmaz: tahmin edilen düzen uygulanır, Ayarlar > Cihaz'dan değiştirilir
 
   function kvkk(){
     if(oku('localStorage','vy_kvkk')===KVKK_SURUM){cihaz();return;}

@@ -1300,3 +1300,16 @@ html[data-cihaz="tablet"] .cs-ctrl,html[data-cihaz="tablet"] .c-ctrl{position:st
   html[data-cihaz="telefon"] .cs-btns .act,html[data-cihaz="telefon"] .cs-btns .btn{min-height:48px;font-size:15px}
   html[data-cihaz="telefon"] .cs-pre button{min-width:58px;padding:4px 10px}
 }
+
+/* 3D yardım yazıları ortadaki "Konuş" düğmesinin altına girmesin; biraz daha okunur */
+.v3-help{max-width:calc(50% - 78px);color:rgba(255,255,255,.62)}
+/* Telefonda yan paneller masanın altında; 3D sahne kaydırmayı yuttuğu için "Geçmiş" düğmesi oraya indirir */
+.log-jump{display:none}
+@media (orientation:portrait){html[data-cihaz="telefon"] .log-jump{display:inline-flex}}
+/* Dar ekranda ders şeridi: düzey başlıkları şeritte ayraç olarak görünür, kaba kaydırma çubuğu yok */
+@media (max-width:820px){
+  .lnav{scrollbar-width:none;align-items:center}
+  .lnav::-webkit-scrollbar{display:none}
+  .lnav .grp{display:flex;align-items:center;gap:4px;white-space:nowrap;padding:0 2px 0 12px;font-size:10px}
+  .lnav .grp:first-child{padding-left:0}
+}

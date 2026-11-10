@@ -189,8 +189,17 @@ const Talk=(()=>{
   const R=Math.random,pick=a=>a[Math.floor(R()*a.length)];
   const alive=p=>G&&!p.human&&!p.out&&SAVE.settings.talk!==false;
   const ex=p=>(p.char&&p.char.expr)||1;
-  function say(p,txt,ms){
+  function say(p,txt,ms,force){
     if(!G||!alive(p)||p._sayUntil>Date.now())return;
+    // Masa gevezeliği: bir elde en çok 3 laf, iki laf arası en az 4 sn, son 14 cümle tekrarlanmaz (karşılama ve sana cevap hariç)
+    const now=Date.now();
+    if(G._tkH!==G.handNo){G._tkH=G.handNo;G._tkN=0;}
+    G._tkR=G._tkR||[];
+    if(!force){
+      if(G._tkN>=3||now<(G._tkAt||0)||G._tkR.includes(txt))return;
+      G._tkN++;
+    }
+    G._tkAt=now+4000;G._tkR.push(txt);if(G._tkR.length>14)G._tkR.shift();
     ms=ms||Math.max(2000,txt.length*75+1000);p._sayUntil=Date.now()+ms+500;
     if(G.v3)Sahne.say(p,txt,ms);
     else{const el=p.el&&p.el.querySelector('.s-say');if(el){el.textContent=txt;el.classList.add('on');clearTimeout(p._sayT);p._sayT=setTimeout(()=>el.classList.remove('on'),ms);}}
@@ -232,7 +241,7 @@ const Talk=(()=>{
       if(!G)return;
       // Tanınan oyuncuyu masa adıyla karşılar; efsaneye kalkıp saygı gösterirler.
       const known=rl&&REP_GREET[rl]&&REP_GREET[rl][p.style];
-      say(p,pick(known||(TALK[p.style]||TALK.gevsek).greet));
+      say(p,pick(known||(TALK[p.style]||TALK.gevsek).greet),0,true);
       if(G.v3)Sahne.act(p,rl>=3&&p.style!=='manyak'&&R()<.5?'clap':'nod');
     },700+i*1400));
   }
@@ -248,7 +257,7 @@ const Talk=(()=>{
     c.forEach((p,i)=>setTimeout(()=>{
       if(!G)return;
       const rep=(EMOTE_REPLY[kind]||{})[p.style];
-      if(rep&&(i===0||R()<.5))say(p,pick(rep));
+      if(rep&&(i===0||R()<.5))say(p,pick(rep),0,true);
       if(G.v3){
         if(kind==='lucky'&&p.style==='manyak')Sahne.act(p,'shrug');
         else if(kind==='nice')Sahne.act(p,R()<.5?'nod':(p.style==='tilki'||p.style==='gevsek'?'chuckle':'smirk'));
