@@ -126,48 +126,19 @@ const SFX=(()=>{
   });
   // Mekân profilleri: yankı [süre, sönüm, ıslaklık], müzik filtresi, oda mırıltısı, müzik tarzı, olaylar ve fiş tınısı
   const VP={
-    antrenman:{rev:[.5,3,.06],lp:7000,f:300,vol:.08,music:{style:'pad',root:174.6,scale:'major',bpm:60,vol:.05},ev:{clink:.05},chip:[1,1]},
-    kacak:{rev:[.35,3.5,.05],lp:1700,f:260,vol:.14,hum:100,music:{style:'radio',root:196,scale:'hicaz',bpm:84,vol:.07},ev:{pipe:.06,lighter:.07,cough:.06},chip:[1.25,.8]},
-    kiraathane:{rev:[.5,3,.07],lp:3800,f:300,vol:.17,music:{style:'saz',root:164.8,scale:'hicaz',bpm:76,vol:.06},ev:{dice:.16,spoon:.12,laugh:.08,tick:.06},chip:[1.15,.9]},
-    yeralti:{rev:[.7,3,.09],lp:2300,f:340,vol:.18,music:{style:'noir',root:110,scale:'dorian',bpm:76,vol:.08},ev:{lighter:.08,clink:.1,laugh:.05,pipe:.03},chip:[1.1,1]},
-    han:{rev:[1.3,2.5,.16],lp:5000,f:360,vol:.2,music:{style:'oud',root:146.8,scale:'hicaz',bpm:92,vol:.07},ev:{spoon:.1,dice:.08,laugh:.06,clink:.06},chip:[1,1]},
-    yali:{rev:[1.4,2.5,.14],lp:9000,f:380,vol:.15,music:{style:'lounge',root:196,scale:'penta',bpm:70,vol:.06},ev:{wave:.14,gull:.05,clink:.1,laugh:.05},chip:[.95,1]},
-    girne:{rev:[1.5,2.5,.15],lp:9000,f:420,vol:.22,music:{style:'lounge',root:220,scale:'major',bpm:96,vol:.06},ev:{slot:.1,chips:.15,clink:.1,wave:.06,laugh:.06},chip:[.95,1.05]},
-    monte:{rev:[2.4,2,.24],lp:8000,f:380,vol:.16,music:{style:'salon',root:261.6,scale:'major',bpm:88,vol:.07},ev:{clink:.14,cork:.04,chips:.1,laugh:.05},chip:[.9,1.1]},
-    macau:{rev:[1.4,2.5,.16],lp:9000,f:440,vol:.24,music:{style:'penta',root:196,scale:'penta',bpm:100,vol:.07},ev:{slot:.22,gong:.05,cheer:.06,chips:.14},chip:[.95,1.05]},
-    vegas:{rev:[1.6,2.3,.17],lp:9500,f:520,vol:.28,music:{style:'swing',root:110,scale:'dorian',bpm:124,vol:.08},ev:{slot:.28,cheer:.07,chips:.14,clink:.1,laugh:.06},chip:[.9,1.1]},
-    suit:{rev:[2.6,2,.26],lp:6500,f:400,vol:.14,music:{style:'pad',root:130.8,scale:'minor',bpm:58,vol:.07},ev:{clink:.08,cork:.03,chips:.06},chip:[.85,1.15]},
+    antrenman:{rev:[.5,3,.06],lp:7000,f:300,vol:.08,music:{style:'calm',vol:.05},ev:{clink:.05},chip:[1,1]},
+    kacak:{rev:[.35,3.5,.05],lp:1700,f:260,vol:.14,hum:100,music:{style:'arabesk',vol:.07},ev:{pipe:.06,lighter:.07,cough:.06},chip:[1.25,.8]},
+    kiraathane:{rev:[.5,3,.07],lp:3800,f:300,vol:.17,music:{style:'turku',vol:.06},ev:{dice:.16,spoon:.12,laugh:.08,tick:.06},chip:[1.15,.9]},
+    yeralti:{rev:[.7,3,.09],lp:2300,f:340,vol:.18,music:{style:'fasil',vol:.08},ev:{lighter:.08,clink:.1,laugh:.05,pipe:.03},chip:[1.1,1]},
+    han:{rev:[1.3,2.5,.16],lp:5000,f:360,vol:.2,music:{style:'ud',vol:.07},ev:{spoon:.1,dice:.08,laugh:.06,clink:.06},chip:[1,1]},
+    yali:{rev:[1.4,2.5,.14],lp:9000,f:380,vol:.15,music:{style:'bossa',vol:.06},ev:{wave:.14,gull:.05,clink:.1,laugh:.05},chip:[.95,1]},
+    girne:{rev:[1.5,2.5,.15],lp:9000,f:420,vol:.22,music:{style:'smooth',vol:.06},ev:{slot:.1,chips:.15,clink:.1,wave:.06,laugh:.06},chip:[.95,1.05]},
+    monte:{rev:[2.4,2,.24],lp:8000,f:380,vol:.16,music:{style:'vals',vol:.07},ev:{clink:.14,cork:.04,chips:.1,laugh:.05},chip:[.9,1.1]},
+    macau:{rev:[1.4,2.5,.16],lp:9000,f:440,vol:.24,music:{style:'macau',vol:.07},ev:{slot:.22,gong:.05,cheer:.06,chips:.14},chip:[.95,1.05]},
+    vegas:{rev:[1.6,2.3,.17],lp:9500,f:520,vol:.28,music:{style:'swing',vol:.08},ev:{slot:.28,cheer:.07,chips:.14,clink:.1,laugh:.06},chip:[.9,1.1]},
+    suit:{rev:[2.6,2,.26],lp:6500,f:400,vol:.14,music:{style:'ballad',vol:.07},ev:{clink:.08,cork:.03,chips:.06},chip:[.85,1.15]},
   };
-  const SC={hicaz:[0,1,4,5,7,8,11],minor:[0,2,3,5,7,8,10],major:[0,2,4,5,7,9,11],penta:[0,2,4,7,9],dorian:[0,2,3,5,7,9,10]};
-  const nt=(m,d)=>{const sc=SC[m.scale];return m.root*Math.pow(2,(sc[((d%sc.length)+sc.length)%sc.length]+12*Math.floor(d/sc.length))/12);};
-  const cl=(x,a,b)=>Math.max(a,Math.min(b,x));
-  let mIn=null,M={d:0};
-  const mv=(t,f,o)=>tone(t,Object.assign({},o,{f,out:mIn}));
-  // pençeyle çalınan tel: hızla kapanan filtre
-  function pluckV(t,f,dur,vol,type='triangle'){
-    const osc=ctx.createOscillator();osc.type=type;osc.frequency.setValueAtTime(f,t);
-    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(8000,f*7),t);lp.frequency.exponentialRampToValueAtTime(Math.max(200,f*1.2),t+dur);
-    const g=ctx.createGain();env(g,t,vol,.004,dur);osc.connect(lp);lp.connect(g);g.connect(mIn);osc.start(t);osc.stop(t+dur+.05);
-  }
-  function padV(t,f,dur,vol){
-    for(const dt of[-6,6]){const osc=ctx.createOscillator();osc.type='sawtooth';osc.frequency.value=f;osc.detune.value=dt;
-      const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;
-      const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(Math.max(.0002,vol*vs/2),t+dur*.4);g.gain.linearRampToValueAtTime(.0001,t+dur);
-      osc.connect(lp);lp.connect(g);g.connect(mIn);osc.start(t);osc.stop(t+dur+.05);}
-  }
-  const walk=(m,k=3)=>{M.d=cl(M.d+Math.floor(R()*(k*2-1))-(k-1),-1,9);return M.d;};
-  // Müzik tarzları: her biri bir sekizlik adımda çağrılır (t: zaman, n: adım)
-  const STY={
-    radio(t,n,m){const b=n%16;if(b%4===0&&R()<.55)pluckV(t,nt(m,walk(m)),1.1,m.vol*1.2,'sawtooth');if(b===0)padV(t,nt(m,0)/2,5,m.vol*.8);if(R()<.05)noise(t,{type:'highpass',f:4500,dur:.05,vol:.1,out:mIn});},
-    saz(t,n,m){const b=n%16;if(b%2===0&&R()<(b%4===0?.6:.3)){const d=walk(m);pluckV(t,nt(m,d),.7,m.vol*1.3);if(R()<.3)pluckV(t+.12,nt(m,d+1),.5,m.vol);}if(b%8===0)mv(t,nt(m,0)/2,{dur:3.4,vol:m.vol*.35,att:.4});if(b===0||b===10)tone(t,{f:120,f2:70,dur:.14,vol:m.vol*1.6,out:mIn});},
-    noir(t,n,m){const b=n%8,bar=n>>3,r=[0,3,4,0][bar%4];if(b%2===0)pluckV(t,nt(m,r+[0,2,4,2][(n>>1)%4])/2,.5,m.vol*1.6);if(b===2||b===6)noise(t,{type:'highpass',f:6000,dur:.12,vol:m.vol*1.2,out:mIn});if(R()<.12)pluckV(t,nt(m,walk(m,3)),1.6,m.vol*1.3);},
-    oud(t,n,m){const b=n%16;if(b%2===0&&R()<.55){const d=walk(m,4),k=R()<.35?3:1;for(let i=0;i<k;i++)pluckV(t+i*.07,nt(m,d-(i%2)),.55,m.vol*1.2,'sawtooth');}if(b%8===0)mv(t,nt(m,0)/2,{dur:3,vol:m.vol*.3,att:.3});if(b===0||b===6||b===8)tone(t,{f:140,f2:75,dur:.16,vol:m.vol*1.7,out:mIn});if(b===4||b===12||b===14)noise(t,{type:'bandpass',f:3200,q:2,dur:.04,vol:m.vol*1.4,out:mIn});},
-    lounge(t,n,m){const b=n%16,r=nt(m,[0,3,4,2][(n>>4)%4]);if(b===0){padV(t,r,4,m.vol*.9);tone(t,{f:r/2,dur:1.2,vol:m.vol*1.2,out:mIn});}if(b%4===2&&R()<.5){const f=nt(m,walk(m))*2;tone(t,{f,dur:1.1,vol:m.vol*.9,att:.005,out:mIn});tone(t,{f:f*4,dur:.4,vol:m.vol*.2,out:mIn});}},
-    salon(t,n,m){const b=n%8,ch=[[0,2,4],[5,0,2],[3,5,0],[4,6,1]][(n>>3)%4];pluckV(t,nt(m,ch[[0,1,2,1,0,1,2,1][b]]+7),.5,m.vol*1.1,'sawtooth');if(b===0)padV(t,nt(m,ch[0]),3.4,m.vol*.7);},
-    penta(t,n,m){const b=n%16;if(b%2===0&&R()<.5){const d=walk(m);pluckV(t,nt(m,d)*2,.8,m.vol*1.2);if(R()<.35)pluckV(t+.1,nt(m,d+1)*2,.6,m.vol);}if(b===0)padV(t,nt(m,[0,2,4][(n>>4)%3]),4,m.vol*.8);},
-    swing(t,n,m){const b=n%4,sw=b%2?.04:0,r=[0,3,4,0][(n>>4)%4];if(b%2===0)pluckV(t+sw,nt(m,r+[0,2,4,2,5,4,2,1][(n>>1)%8])/2,.35,m.vol*1.8);if(b===1||b===3)noise(t+sw,{type:'highpass',f:6500,dur:.07,vol:m.vol,out:mIn});if(n%16===0&&R()<.6){pluckV(t,nt(m,4)*2,.4,m.vol*1.1,'sawtooth');pluckV(t+.01,nt(m,6)*2,.4,m.vol*1.1,'sawtooth');}if(R()<.1)pluckV(t,nt(m,walk(m))*2,.5,m.vol*1.2);},
-    pad(t,n,m){const b=n%32;if(b===0)padV(t,nt(m,[0,3,4,5][(n>>5)%4]),9,m.vol*1.1);if(b%8===4&&R()<.35)tone(t,{f:nt(m,walk(m))*2,dur:1.8,vol:m.vol*.7,att:.01,out:mIn});},
-  };
+  let mIn=null;   // müzik girişi; ezgileri js/muzik.js üretir
   const mkIR=(sec,decay)=>{const len=Math.floor(ctx.sampleRate*sec),b=ctx.createBuffer(2,len,ctx.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}return b;};
   let amb=null,ab=null;
   function ambBuf(){if(ab)return ab;const len=ctx.sampleRate*4;ab=ctx.createBuffer(1,len,ctx.sampleRate);const d=ab.getChannelData(0);let l=0;for(let i=0;i<len;i++){l=(l+.02*(Math.random()*2-1))/1.02;d[i]=l*3.5;}return ab;}
@@ -175,8 +146,8 @@ const SFX=(()=>{
   function applyMusic(){if(!mIn||!ctx)return;mIn.gain.setTargetAtTime(musicOn()?({low:.55,normal:1,high:1.6})[SAVE.settings.musicVol||'normal']||1:0,ctx.currentTime,.3);}
   function stopAmb(){
     if(!amb)return;
-    try{amb.src.stop();}catch(e){}try{if(amb.hum)amb.hum.stop();}catch(e){}
-    clearInterval(amb.it);clearInterval(amb.mi);
+    try{amb.src.stop();}catch(e){}try{if(amb.mus)amb.mus.stop();}catch(e){}try{if(amb.hum)amb.hum.stop();}catch(e){}
+    clearInterval(amb.it);
     try{master.disconnect(amb.conv);}catch(e){}
     for(const n of[amb.g,amb.conv,amb.rw,amb.mIn,amb.mlp,amb.hg]){try{if(n)n.disconnect();}catch(e){}}
     amb=null;mIn=null;tm={cf:1,cv:1};
@@ -199,13 +170,8 @@ const SFX=(()=>{
     if(vp.hum){hum=ctx.createOscillator();hum.type='square';hum.frequency.value=vp.hum;const hf=ctx.createBiquadFilter();hf.type='lowpass';hf.frequency.value=380;hg=ctx.createGain();hg.gain.value=.006;hum.connect(hf);hf.connect(hg);hg.connect(master);hum.start();}
     // müzik: mekâna göre filtrelenir (alt katta boğuk, salonda net)
     mIn=ctx.createGain();const mlp=ctx.createBiquadFilter();mlp.type='lowpass';mlp.frequency.value=vp.lp;mIn.connect(mlp);mlp.connect(master);
-    M={d:0};applyMusic();
-    const m=vp.music,step=60/m.bpm/2;let n=0,next=ctx.currentTime+.4;
-    const mi=setInterval(()=>{
-      if(!ctx||ctx.state!=='running')return;
-      if(next<ctx.currentTime-.5)next=ctx.currentTime+.1;
-      while(next<ctx.currentTime+.45){if(musicOn()){try{STY[m.style](next,n,m);}catch(e){}}next+=step;n++;}
-    },120);
+    applyMusic();
+    let mus=null;try{mus=typeof Muzik!=='undefined'?Muzik.start(ctx,mIn,vp.music,musicOn):null;}catch(e){}
     const base=vp.vol;
     const tick=()=>{
       if(!ctx)return;const on=SAVE.settings.sound!==false&&ctx.state==='running';
@@ -218,7 +184,7 @@ const SFX=(()=>{
       }
     };
     const it=setInterval(tick,1400);tick();
-    amb={src,g,it,mi,hum,hg,conv,rw,mIn,mlp};
+    amb={src,g,it,mus,hum,hg,conv,rw,mIn,mlp};
   }
   // Uygulama arka plana alınınca ya da pencere küçültülünce ses susar
   document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend().catch(()=>{});else ctx.resume().catch(()=>{});});
@@ -546,7 +512,7 @@ function openSettings(){
     <div class="set-row"><div><b>Cihaz</b><small>Arayüz düzeni: telefonda hamle düğmeleri hep altta, bilgisayarda yan paneller açık</small></div><div class="seg" id="set-cihaz">${[['telefon','Telefon'],['tablet','Tablet'],['pc','Bilgisayar']].map(([v,l])=>`<button data-cz="${v}" aria-pressed="${(window.VYCihaz?VYCihaz.get():'pc')===v}">${l}</button>`).join('')}</div></div>
     <div class="set-row"><div><b>Oyun hızı</b><small>Rakiplerin ne kadar hızlı oynadığı</small></div><div class="seg">${seg('speed','normal','Normal')}${seg('speed','fast','Hızlı')}</div></div>
     <div class="set-row"><div><b>Sesler</b><small>Kart dağıtma, fiş ve kazanma sesleri</small></div>${tog('sound')}</div>
-    <div class="set-row"><div><b>Müzik</b><small>Her salonun kendi müziği çalar: radyo, caz, saz, salon müziği</small></div>${tog('music')}</div>
+    <div class="set-row"><div><b>Müzik</b><small>Her salonun kendi müziği çalar: radyoda arabesk ve türkü, fasıl, ud, bossa nova, vals, swing</small></div>${tog('music')}</div>
     <div class="set-row"><div><b>Müzik sesi</b><small>Ortam müziğinin yüksekliği</small></div><div class="seg">${seg('musicVol','low','Kısık')}${seg('musicVol','normal','Normal')}${seg('musicVol','high','Yüksek')}</div></div>
     <div class="set-row"><div><b>Rakip konuşmaları</b><small>Rakipler masada konuşur; balonlar başlarının üstünde çıkar</small></div>${tog('talk')}</div>
     <div class="set-row"><div><b>Masa görünümü</b><small>${Sahne.ok?'3D salonda masaya oturursun; düz masa daha hafiftir':'Bu bilgisayarda 3D (WebGL) desteklenmiyor'}</small></div><div class="seg">${Sahne.ok?seg('view','3d','3D salon'):''}${seg('view','2d','Düz masa')}</div></div>
