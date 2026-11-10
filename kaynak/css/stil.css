@@ -1203,3 +1203,78 @@ body{
 #scr-ogame .on-chat ol{list-style:none;margin:6px 0 0;padding:0;max-height:200px;overflow:auto;display:grid;gap:4px;font-size:13.5px}
 #scr-ogame .on-chat li b{color:var(--accent);margin-right:6px}#scr-ogame .on-chat li.mine b{color:#6fc28c}
 #og-actions #og-start,#og-actions #og-rebuy{margin-left:auto}
+
+/* ---------- El aşaması etiketi (Pre-flop / Flop / Turn / River) ---------- */
+.stg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:var(--gold,#ddab4b);color:#1b1511;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.v3-board .stg{flex:none}
+#pot .stg{margin-right:8px}
+@media (max-width:640px){.v3-board .stg{font-size:10px;padding:2px 8px}}
+
+/* ---------- Çip masası: kurpiyer kartı ve geri alma ---------- */
+.cs-deal{display:grid;gap:4px;padding:10px 14px;border-radius:14px;background:rgba(221,171,75,.1);border:1px solid rgba(221,171,75,.4);font-size:14px}
+.cs-deal .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--accent)}
+.cs-deal b{color:var(--accent)}
+.cs-deal .now{font-weight:700}
+.cs-deal .nx{color:var(--muted);font-size:13px}
+.cs-deal.fresh{animation:csPulse 1.4s ease-out 1}
+@keyframes csPulse{0%{box-shadow:0 0 0 0 rgba(221,171,75,.75)}100%{box-shadow:0 0 0 14px rgba(221,171,75,0)}}
+.cs-undo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:rgba(227,101,92,.1);border:1px dashed rgba(227,101,92,.55)}
+.cs-undo span{font-size:13px;color:#e6dcc6;min-width:0;flex:1 1 160px}
+.cs-undo b{color:#fff}
+.cs-undo button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(227,101,92,.7);background:rgba(227,101,92,.2);font-weight:800;font-size:15px;white-space:nowrap}
+.cs-undo button:disabled{opacity:.4}
+@media (prefers-reduced-motion:reduce){.cs-deal.fresh{animation:none}}
+
+/* ---------- Cihaza göre arayüz (html[data-cihaz] giriş ekranında seçilir) ----------
+   Ortak: mobil tarayıcıda adres çubuğu 100% yüksekliği taşırdığı için hamle düğmeleri ekranın altında kalıyordu; dvh ile düzeltildi. */
+@supports (height:100dvh){body.in-game #app{height:100dvh}}
+.actions{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+
+html[data-cihaz="telefon"] .h-touch,html[data-cihaz="tablet"] .h-touch{display:inline}
+html[data-cihaz="telefon"] .h-mouse,html[data-cihaz="tablet"] .h-mouse,html[data-cihaz="telefon"] kbd,html[data-cihaz="tablet"] kbd{display:none}
+html[data-cihaz="telefon"] .presets button,html[data-cihaz="tablet"] .presets button{padding:8px 12px;font-size:13px}
+html[data-cihaz="telefon"] .act,html[data-cihaz="tablet"] .act{min-height:54px}
+html[data-cihaz="telefon"] .icon-btn,html[data-cihaz="tablet"] .icon-btn{width:40px;height:40px}
+
+/* Tablet: iki sütun korunur, masa alanı ekrana göre büyür, düğmeler iri */
+html[data-cihaz="tablet"] .v3on .table-area{min-height:max(320px,calc(100dvh - 270px))}
+html[data-cihaz="tablet"] .a-btns .act{min-width:130px}
+
+/* Telefon, dikey: masa üstte, hamle çubuğu altta sabit; yan paneller masanın altında kaydırılır */
+@media (orientation:portrait){
+  html[data-cihaz="telefon"] .screen{padding-inline:10px}
+  html[data-cihaz="telefon"] .game{padding-block:6px 0}
+  html[data-cihaz="telefon"] .g-top{gap:8px;padding-bottom:6px}
+  html[data-cihaz="telefon"] .g-main{grid-template-columns:minmax(0,1fr);overflow:auto;gap:10px}
+  html[data-cihaz="telefon"] .g-side{display:grid;grid-template-columns:minmax(0,1fr)}
+  html[data-cihaz="telefon"] .v3on .table-area{min-height:max(260px,calc(100dvh - 230px))}
+  html[data-cihaz="telefon"] .v3on .v3{inset:0}
+  html[data-cihaz="telefon"] .actions{display:grid;gap:6px;margin-inline:-10px;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));min-height:0}
+  html[data-cihaz="telefon"] .actions:has(.a-human:not([hidden])) .a-status{display:none}
+  html[data-cihaz="telefon"] .a-status{flex:none;font-size:13px;text-align:center}
+  html[data-cihaz="telefon"] .a-human{display:grid;gap:8px;width:100%;justify-content:stretch}
+  html[data-cihaz="telefon"] .a-raise{display:grid;gap:6px;width:100%}
+  html[data-cihaz="telefon"] .presets{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+  html[data-cihaz="telefon"] .presets::-webkit-scrollbar{display:none}
+  html[data-cihaz="telefon"] .presets button{flex:none}
+  html[data-cihaz="telefon"] .slider input{min-width:0}
+  html[data-cihaz="telefon"] .a-btns{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  html[data-cihaz="telefon"] .act{min-width:0;font-size:15px;padding:0 6px}
+  html[data-cihaz="telefon"] .actions>.btn{min-height:50px;width:100%}
+  /* Çip masası ve kumarhane oyunları: düğmeler ekranın altında sabit kalır */
+  html[data-cihaz="telefon"] .cs-ctrl,html[data-cihaz="telefon"] .c-ctrl{position:sticky;bottom:0;z-index:6;margin-inline:-4px;background:linear-gradient(180deg,#1f160f,#0d0907);box-shadow:0 -10px 24px rgba(0,0,0,.55);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  html[data-cihaz="telefon"] .cs-pre{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  html[data-cihaz="telefon"] .cs-pre button{flex:none}
+  html[data-cihaz="telefon"] .cs-pl{width:clamp(64px,19vw,92px)}
+  html[data-cihaz="telefon"] .cs-table{max-height:none;aspect-ratio:1.05;margin:26px auto 18px}
+}
+html[data-cihaz="tablet"] .cs-ctrl,html[data-cihaz="tablet"] .c-ctrl{position:sticky;bottom:0;z-index:6;background:linear-gradient(180deg,#1f160f,#0d0907)}
+@media (orientation:portrait){
+  html[data-cihaz="telefon"] .cs-ctrl{padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));gap:8px;border-radius:16px 16px 0 0}
+  html[data-cihaz="telefon"] .cs-raise{gap:6px}
+  html[data-cihaz="telefon"] .cs-eq,html[data-cihaz="telefon"] .cs-num{display:none}
+  html[data-cihaz="telefon"] .cs-turn>b{font-size:16px}
+  html[data-cihaz="telefon"] .cs-turn>span{font-size:12.5px}
+  html[data-cihaz="telefon"] .cs-btns .act,html[data-cihaz="telefon"] .cs-btns .btn{min-height:48px;font-size:15px}
+  html[data-cihaz="telefon"] .cs-pre button{min-width:58px;padding:4px 10px}
+}

@@ -894,6 +894,7 @@ function addNPC(d,o){
   if(Q()==='low')return null;
   const P=makePerson(d,{idx:-2,standing:!!o.standing,npc:o.mode,style:'gevsek'});
   P.root.position.copy(o.pos);P.root.rotation.y=o.yaw||0;W.scene.add(P.root);
+  if(!o.path&&W.obst)W.obst.push({x:o.pos.x,z:o.pos.z,r:.42});
   P.root.traverse(m=>{if(m.isMesh)m.castShadow=false;});
   if(o.rest)P.restOverride=o.rest;
   P.npcLean=o.lean||0;
@@ -914,10 +915,19 @@ function serveTick(P,dt,t){
     const c=W.seats.filter((S,i)=>i>0&&S&&S.person&&S.person.root.visible&&!(S.p&&S.p.out));
     if(!c.length){P.svNext=t+15;return false;}
     const S=pick1(c),pp=S.person.root.position,r=Math.hypot(pp.x,pp.z)||1;
-    const ox=pp.x/r,oz=pp.z/r;
-    P.sv={ph:'go',S,tg:V3(pp.x+ox*.95-oz*.55,0,pp.z+oz*.95+ox*.55),wait:0};
+    const ox=pp.x/r,oz=pp.z/r,tg=V3(pp.x+ox*.95-oz*.55,0,pp.z+oz*.95+ox*.55);
+    // masadan geçmesin: önce halka rotası üzerinde oyuncuya en yakın noktaya yürür, sonra kısa mesafe içeri girer
+    let bu=0,bd=1e9;for(let i=0;i<96;i++){P.path.getPointAt(i/96,_a);const d=Math.hypot(_a.x-tg.x,_a.z-tg.z);if(d<bd){bd=d;bu=i/96;}}
+    P.path.getPointAt(bu,_a);const dx=bu-P.pathU,du=dx-Math.round(dx);
+    P.sv={ph:'along',S,tg,u:bu,home:V3(_a.x,0,_a.z),dir:du>=0?1:-1,wait:0};
   }
   const sv=P.sv,pos=P.root.position;
+  if(sv.ph==='along'){
+    const dx=sv.u-P.pathU,rem=Math.abs(dx-Math.round(dx)),step=(P.speed||.62)*1.1*dt/P.pathLen;
+    if(rem<=step){P.pathU=sv.u;sv.ph='go';}else P.pathU=(P.pathU+sv.dir*step+1)%1;
+    P.path.getPointAt(P.pathU,_a);pos.set(_a.x,0,_a.z);P.path.getTangentAt(P.pathU,_b);P.root.rotation.y=Math.atan2(_b.x*sv.dir,_b.z*sv.dir);
+    P.walk=1;P.walkPh+=dt*7.4;return true;
+  }
   if(sv.ph==='go'||sv.ph==='back'){
     const tg=sv.ph==='go'?sv.tg:sv.home;_t.set(tg.x-pos.x,0,tg.z-pos.z);const d=_t.length();
     if(d<.12){
@@ -940,15 +950,21 @@ function serveTick(P,dt,t){
     if(!S.person.seq)S.person.act('nod');
     try{SFX.play('clink');}catch(e){}
   }
-  if(sv.wait>2){
-    let bu=0,bd=1e9;for(let i=0;i<48;i++){P.path.getPointAt(i/48,_a);const d=Math.hypot(_a.x-pos.x,_a.z-pos.z);if(d<bd){bd=d;bu=i/48;}}
-    P.path.getPointAt(bu,_a);sv.home=V3(_a.x,0,_a.z);sv.u=bu;sv.ph='back';
-  }
+  if(sv.wait>2)sv.ph='back';
   return true;
+}
+// Garsonlar masaya, sandalyeye, piyanoya ya da ayakta duran kişilere çarpmasın: engel dairelerinin ve ana masa elipsinin dışına itilir.
+function avoidObst(pos){
+  const a=RXo+.9,b=RZo+.9;
+  for(let k=0;k<2;k++){
+    const e=(pos.x/a)**2+(pos.z/b)**2;if(e<1){const f=1/Math.sqrt(Math.max(e,1e-6));pos.x*=f;pos.z*=f;}
+    for(const o of W.obst||[]){const dx=pos.x-o.x,dz=pos.z-o.z,d=Math.hypot(dx,dz);if(d<o.r){const f=d>1e-4?o.r/d:0;if(f){pos.x=o.x+dx*f;pos.z=o.z+dz*f;}else pos.x=o.x+o.r;}}
+  }
 }
 function updNPC(P,dt,t){
   let served=false;try{served=serveTick(P,dt,t);}catch(e){P.svNext=1e9;P.sv=null;}
   if(P.path&&!served){P.pathU=(P.pathU+dt*P.speed/P.pathLen)%1;P.path.getPointAt(P.pathU,_a);P.root.position.set(_a.x,0,_a.z);P.path.getTangentAt(P.pathU,_b);P.root.rotation.y=Math.atan2(_b.x,_b.z);P.walkPh+=dt*7.4;}
+  if(P.path)avoidObst(P.root.position);
   P.update(dt,t);
   if(P.trayObj){P.hand[0].localToWorld(_a.set(0,.03,.07));P.trayObj.position.copy(_a);P.trayObj.rotation.set(0,P.root.rotation.y,0);}
 }
@@ -1180,8 +1196,10 @@ function sitPair(tx,tz,o={}){
   const top=mesh(box(.8,.04,.8),o.top||mat('#4a2c18',{roughness:.6}));top.position.set(tx,.72,tz);W.scene.add(top);
   const leg=mesh(cyl(.05,.07,.7,8),mat('#2a1a10'));leg.position.set(tx,.36,tz);W.scene.add(leg);
   if(o.board){const bd=mesh(box(.5,.02,.34),mat('#6b3f1d',{roughness:.5}));bd.position.set(tx,.755,tz);W.scene.add(bd);for(let i=0;i<12;i++){const tri=mesh(box(.018,.003,.12),mat(i%2?'#e8dcc0':'#2a1a10'),false);tri.position.set(tx-.22+i*.04,.767,tz+(i<6?-.09:.09));W.scene.add(tri);}}
+  W.obst.push({x:tx,z:tz,r:.62});
   const pair=[];
   for(const sgn of[-1,1]){
+    W.obst.push({x:tx+sgn*.84,z:tz,r:.42});
     const px=tx+sgn*.78,pz=tz,yaw=Math.atan2(tx-px,0);
     const ch=makeChair(o.chair||'wood');ch.position.set(px+sgn*.06,0,pz);ch.rotation.y=yaw;W.scene.add(ch);
     const P=addNPC(npcDef(o.kind||'gambler'),{mode:'sit',pos:V3(px,0,pz),yaw,rest:[V3(.12,.76,.36),V3(-.12,.76,.36)],look:V3(tx,.8,tz),lean:.08});
@@ -1300,6 +1318,7 @@ function decoYali(V,w,d,h){
   // kuyruklu piyano
   boxM(1.7,.82,1.15,mat('#0a0a0c',{roughness:.25,metalness:.3}),-w/2+1.6,.5,-2.6);
   boxM(1.2,.03,.26,mat('#f4f1ea',{roughness:.4}),-w/2+1.6,.93,-2.05);
+  for(const dx of[-.55,0,.55])W.obst.push({x:-w/2+1.6+dx,z:-2.6,r:.8});
   const lid=boxM(1.7,.03,1.1,mat('#0a0a0c',{roughness:.2,metalness:.3}),-w/2+1.6,1.12,-2.7);lid.rotation.z=.4;
   // pencere önünde konuşan iki konuk
   const pa=[];for(const sgn of[-1,1]){const px=2.4+sgn*.42,pz=-d/2+1.5;pa.push(addNPC(npcDef('elegant'),{mode:'stand',standing:true,pos:V3(px,0,pz),yaw:Math.atan2(-sgn*.42,.2),rest:[V3(.15,.9,.3),V3(-.15,.9,.32)],look:V3(2.4,1.2,pz),lean:.1}));}
@@ -1543,7 +1562,7 @@ function start(G,el,opt={}){
   const sh=Q()!=='low';
   if(renderer.shadowMap.enabled!==sh){renderer.shadowMap.enabled=sh;MC.forEach(m=>{m.needsUpdate=true;});}
   const scene=new T.Scene();scene.background=new T.Color(V.fog[0]);scene.fog=new T.FogExp2(V.fog[0],V.fog[1]);
-  W={scene,V,t:0,tw:[],upd:[],disp:[],seats:[],people:[],npcs:[],jobs:[],pool:[],board:[],loose:[],potAmt:0,potPaid:false,turnIdx:-1,btnIdx:-1,ready:false};
+  W={scene,V,t:0,tw:[],upd:[],disp:[],seats:[],people:[],npcs:[],obst:[],jobs:[],pool:[],board:[],loose:[],potAmt:0,potPaid:false,turnIdx:-1,btnIdx:-1,ready:false};
   applySettings();
   try{const pm=new T.PMREMGenerator(renderer);const et=envTex(V);const rt=pm.fromEquirectangular(et);scene.environment=rt.texture;W.disp.push(rt);pm.dispose();}catch(e){}
   W.smoke=smokeSys(V.room[0]<=8?110:70);
@@ -1855,7 +1874,7 @@ function newWorld(id,el,V0){
   const sh=Q()!=='low';
   if(renderer.shadowMap.enabled!==sh){renderer.shadowMap.enabled=sh;MC.forEach(m=>{m.needsUpdate=true;});}
   const scene=new T.Scene();scene.background=new T.Color(V.fog[0]);scene.fog=new T.FogExp2(V.fog[0],V.fog[1]);
-  W={scene,V,t:0,tw:[],upd:[],disp:[],seats:[],people:[],npcs:[],jobs:[],pool:[],board:[],loose:[],potAmt:0,potPaid:false,turnIdx:-1,btnIdx:-1,ready:false,piles:{},slots:{},shown:{}};
+  W={scene,V,t:0,tw:[],upd:[],disp:[],seats:[],people:[],npcs:[],obst:[],jobs:[],pool:[],board:[],loose:[],potAmt:0,potPaid:false,turnIdx:-1,btnIdx:-1,ready:false,piles:{},slots:{},shown:{}};
   applySettings();
   try{const pm=new T.PMREMGenerator(renderer);const et=envTex(V);const rt=pm.fromEquirectangular(et);scene.environment=rt.texture;W.disp.push(rt);pm.dispose();}catch(e){}
   W.smoke=smokeSys(V.room[0]<=8?110:70);

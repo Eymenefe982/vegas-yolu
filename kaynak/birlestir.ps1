@@ -8,11 +8,11 @@ $html = [IO.File]::ReadAllText("$k\index.html", $u)
 $css  = [IO.File]::ReadAllText("$k\css\stil.css", $u)
 $ico  = [Convert]::ToBase64String([IO.File]::ReadAllBytes("$k\ikon.png"))
 $html = $html.Replace('<link rel="stylesheet" href="css/stil.css">', "<style>`n$css</style>")
-foreach ($src in @('lib/three.min.js', 'js/ek.js', 'js/sahne.js', 'js/avatar.js', 'js/oyun.js', 'js/ekstra.js', 'js/oyunlar.js', 'js/cip.js')) {
+# index.html'deki tum yerel <script src="..."> etiketleri sirasiyla icine gomulur (yeni dosya eklenince liste guncellemek gerekmez).
+foreach ($m in [regex]::Matches($html, '<script src="((?:js|lib)/[^"]+)"></script>')) {
+  $src = $m.Groups[1].Value
   $js = [IO.File]::ReadAllText("$k\$($src.Replace('/', '\'))", $u)
-  $tag = "<script src=`"$src`"></script>"
-  if (-not $html.Contains($tag)) { throw "index.html icinde $tag bulunamadi." }
-  $html = $html.Replace($tag, "<script>`n$js</script>")
+  $html = $html.Replace($m.Value, "<script>`n$js</script>")
 }
 $html = $html.Replace('href="ikon.png"', "href=`"data:image/png;base64,$ico`"")
 [IO.File]::WriteAllText($Hedef, $html, $u)

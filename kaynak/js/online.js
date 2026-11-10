@@ -37,7 +37,7 @@
   function uyariGoster(onOk){
     openModal(`<span class="kicker">Online mod</span><h3>Başlamadan önce</h3>
       <ul class="on-warn">
-        <li><b>18 yaş ve üzeri</b> içindir. Oyun eğlence ve rekabet amaçlıdır; kumarı özendirmez. <b>Gerçek para yoktur</b>, çipler sanaldır.</li>
+        <li><b>18 yaş ve üzeri</b> içindir. Oyun eğlence ve rekabet amaçlıdır; kumarı özendirmez. <b>Gerçek para yoktur</b>, çipler sanaldır. Gerçek paralı kumar Türkiye’de yasaktır; oyuncular arasında para karşılığı oynama.</li>
         <li>Takma adın, karakterin ve masaya yazdığın <b>mesajlar masadaki herkese görünür</b>. Kişisel bilgini (gerçek ad, telefon, adres) yazma.</li>
         <li>Mesajlar ve masa bilgisi masa açık kaldığı sürece sunucuda tutulur; masa kapanınca silinmesi için işlem yapılır (KVKK aydınlatma metninde ayrıntı var).</li>
         <li>Masayı kuran oyuncunun cihazı oyunu yönetir; kurucu çıkarsa masa kapanır. Başkalarına saygılı ol, küfür ve taciz yasak. Masa kurucusu seni masadan çıkarabilir.</li>
@@ -463,10 +463,11 @@
   function renderHud(p){
     const me=mySeat(),pl=p.players[me],hc=holeCards(),done=p.phase==='sonuc';
     const pot=done?(p.sonuc?p.sonuc.potlar.reduce((a,r)=>a+r.miktar,0):0):p.pot;
-    const bk=p.board.join(',')+'|'+pot+'|'+p.hand;
+    const stg=p.phase==='el'?OnlineMotor.STREETS[p.street]:p.phase==='sonuc'?'Showdown':'';
+    const bk=p.board.join(',')+'|'+pot+'|'+p.hand+'|'+stg;
     if(bk!==M.hudKey){
       M.hudKey=bk;
-      $o('#ov3-board').innerHTML=(p.board.length||pot>0)?`${p.board.length?`<div class="cards">${p.board.map(c=>cardHTML(c,'')).join('')}</div>`:''}${pot>0?`<span class="bpot"><span class="chip"></span>Pot <b>${fm(pot)}</b></span>`:''}`:'';
+      $o('#ov3-board').innerHTML=(p.board.length||pot>0)?`${stg?`<span class="stg" title="Elin hangi aşamasındasın">${stg}</span>`:''}${p.board.length?`<div class="cards">${p.board.map(c=>cardHTML(c,'')).join('')}</div>`:''}${pot>0?`<span class="bpot"><span class="chip"></span>Pot <b>${fm(pot)}</b></span>`:''}`:'';
     }
     const has=hc&&pl&&!pl.out&&!pl.waiting&&!pl.folded&&p.phase!=='bekle';
     const mk=(has?hc.join(','):'')+'|'+p.board.length+'|'+(pl&&pl.folded)+'|'+p.hand;

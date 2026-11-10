@@ -517,6 +517,7 @@ function openSettings(){
   const seg=(k,v,l)=>`<button data-k="${k}" data-v="${v}" aria-pressed="${s[k]===v}">${l}</button>`;
   const tog=(k)=>`<label class="switch"><input type="checkbox" data-t="${k}" ${s[k]?'checked':''}><span aria-hidden="true"></span></label>`;
   openModal(`<h3>Ayarlar</h3>
+    <div class="set-row"><div><b>Cihaz</b><small>Arayüz düzeni: telefonda hamle düğmeleri hep altta, bilgisayarda yan paneller açık</small></div><div class="seg" id="set-cihaz">${[['telefon','Telefon'],['tablet','Tablet'],['pc','Bilgisayar']].map(([v,l])=>`<button data-cz="${v}" aria-pressed="${(window.VYCihaz?VYCihaz.get():'pc')===v}">${l}</button>`).join('')}</div></div>
     <div class="set-row"><div><b>Oyun hızı</b><small>Rakiplerin ne kadar hızlı oynadığı</small></div><div class="seg">${seg('speed','normal','Normal')}${seg('speed','fast','Hızlı')}</div></div>
     <div class="set-row"><div><b>Sesler</b><small>Kart dağıtma, fiş ve kazanma sesleri</small></div>${tog('sound')}</div>
     <div class="set-row"><div><b>Müzik</b><small>Her salonun kendi müziği çalar: radyo, caz, saz, salon müziği</small></div>${tog('music')}</div>
@@ -533,7 +534,8 @@ function openSettings(){
     <div class="set-row"><div><b>Serbest mod</b><small>Para yetmese de her masaya oturursun; kazanç ve kayıp cüzdana işlemez</small></div>${tog('free')}</div>
     <div class="set-row"><div><b>İlerlemeyi sıfırla</b><small>Cüzdan, tanınırlık, fethedilen masalar, dersler ve istatistikler silinir</small></div><button class="btn ghost small" id="reset-btn">Sıfırla</button></div>
     <div class="row"><button class="btn" id="set-close">Tamam</button></div>`);
-  $$('#sheet .seg button').forEach(b=>b.onclick=()=>{s[b.dataset.k]=b.dataset.v;persist();applySettings();$$(`#sheet .seg button[data-k="${b.dataset.k}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b));});
+  $$('#sheet [data-cz]').forEach(b=>b.onclick=()=>{if(window.VYCihaz)VYCihaz.set(b.dataset.cz);$$('#sheet [data-cz]').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+  $$('#sheet .seg button[data-k]').forEach(b=>b.onclick=()=>{s[b.dataset.k]=b.dataset.v;persist();applySettings();$$(`#sheet .seg button[data-k="${b.dataset.k}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b));});
   $$('#sheet [data-t]').forEach(i=>i.onchange=()=>{s[i.dataset.t]=i.checked;persist();applySettings();});
   $('#reset-btn').onclick=e=>{
     const b=e.currentTarget;
@@ -662,7 +664,7 @@ function render(){
   if(!G)return;
   const g=G;
   const pt=potTotal();
-  $('#pot').innerHTML=pt>0?`<span class="chip"></span>Pot <b>${money(pt)}</b>`:'';
+  $('#pot').innerHTML=pt>0?`<span class="stg">${g.winSet?'Showdown':['Pre-flop','Flop','Turn','River'][g.street]||''}</span><span class="chip"></span>Pot <b>${money(pt)}</b>`:'';
   const bk=g.board.join(',')+'|'+(g.winSet?[...g.winSet].join(','):'');
   if(bk!==g._bk){
     const prevN=g.board.length<(g._bn||0)?0:(g._bn||0);let h='';
@@ -734,10 +736,11 @@ function render(){
     }
     // Ortadaki kartlar ve pot üstte de: 3D'de ışık, açı ya da bakış yönü ne olursa olsun okunur kalsın
     const hud=SAVE.settings.boardHud!==false,pt=potTotal();
-    const bk=hud+'|'+g.board.join(',')+'|'+(g.winSet?[...g.winSet].join(','):'')+'|'+pt;
+    const stg=g.winSet?'Showdown':['Pre-flop','Flop','Turn','River'][g.street]||'';
+    const bk=hud+'|'+g.board.join(',')+'|'+(g.winSet?[...g.winSet].join(','):'')+'|'+pt+'|'+stg;
     if(bk!==g._bh){
       g._bh=bk;
-      $('#v3-board').innerHTML=hud&&(g.board.length||pt>0)?`${g.board.length?`<div class="cards">${g.board.map(c=>cardHTML(c,g.winSet?(g.winSet.has(c)?'win':'dim'):'')).join('')}</div>`:''}${pt>0?`<span class="bpot"><span class="chip"></span>Pot <b>${money(pt)}</b></span>`:''}`:'';
+      $('#v3-board').innerHTML=(g.board.length||pt>0)?`<span class="stg" title="Elin hangi aşamasındasın">${stg}</span>${hud?`${g.board.length?`<div class="cards">${g.board.map(c=>cardHTML(c,g.winSet?(g.winSet.has(c)?'win':'dim'):'')).join('')}</div>`:''}${pt>0?`<span class="bpot"><span class="chip"></span>Pot <b>${money(pt)}</b></span>`:''}`:''}`:'';
     }
   }
 }

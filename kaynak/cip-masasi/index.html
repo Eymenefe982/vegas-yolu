@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="../ikon.png">
+<meta name="theme-color" content="#0f0c0a">
+<title>Çip Masası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=Limelight&family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="../css/stil.css">
+<style>
+  html,body{height:auto;min-height:100%}
+  .cip-note{margin:0 0 14px;padding:10px 14px;border-radius:14px;background:rgba(227,101,92,.09);border:1px solid rgba(227,101,92,.4);font-size:13px;color:#e6dcc6;line-height:1.45}
+  .cip-note b{color:#fff}
+  .cip-foot{margin:22px 0 8px}
+</style>
+</head>
+<body>
+<div id="app">
+<section id="scr-chips" class="screen" hidden>
+  <div class="wrap chips">
+    <div class="topbar">
+      <h2 class="h-display">Çip Masası</h2>
+      <span class="muted">Çip ve bahis takipçisi · 18+</span>
+    </div>
+    <p class="cip-note"><b>Para tutmaz, aktarmaz.</b> Arkadaşlarınla gerçek kartla oynarken çipleri sayar. Türkiye’de gerçek paralı kumar yasaktır; çip değerini eğlence ve puan için kullan.</p>
+    <div id="chips-root"></div>
+    <p class="fine cip-foot">18 yaş ve üzeri içindir. Kumar bağımlılık yapabilir: ALO 182 · 112.</p>
+  </div>
+</section>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<div class="modal" id="modal" hidden><div class="sheet" role="dialog" aria-modal="true" id="sheet"></div></div>
+
+<script>window.VY_CIP=true;</script>
+<script src="../js/ek.js"></script>
+<script src="cip.js"></script>
+<script src="../js/uyari.js"></script>
+<script>
+// Ekran açılır (cip.js 'hidden' değişimini izleyip çizer); geri tuşu önce pencereyi kapatır.
+(function(){
+  var s=document.getElementById('scr-chips');s.hidden=false;
+  window.vyBack=function(){var m=document.getElementById('modal');if(m&&!m.hidden){m.hidden=true;return true;}return false;};
+  var m=document.getElementById('modal');
+  m.addEventListener('click',function(e){if(e.target===m)m.hidden=true;});
+})();
+</script>
+</body>
+</html>
