@@ -602,6 +602,8 @@
       const x=M.act,mp={min:x.minTo,half:x.cur+Math.round((x.pot+x.need)/2),tq:x.cur+Math.round((x.pot+x.need)*.75),pot:x.cur+x.pot+x.need,all:x.maxTo};
       $o('#og-amt').value=clampN(mp[pr.dataset.p],x.minTo,x.maxTo);updRaise();return;
     }
+    const sp=t.closest('.stp');
+    if(sp&&M.act){const x=M.act,st=Math.max(1,x.cur>0?x.minTo-x.cur:x.minTo),a=$o('#og-amt');a.value=clampN((+a.value||x.minTo)+(+sp.dataset.s)*st,x.minTo,x.maxTo);updRaise();return;}
     if(t.closest('#og-rebuy')){sitOrRebuy();return;}
     const kk=t.closest('[data-kick]');
     if(kk&&M.host){const uid=kk.dataset.kick;M.banned.add(uid);M.engine.removePlayer(uid);publish();toast('Oyuncu çıkarıldı','Bu masaya tekrar katılamaz.');return;}

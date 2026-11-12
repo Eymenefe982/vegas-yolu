@@ -1764,6 +1764,15 @@ function updLabels(){
     const bb=bn.offsetTop+bn.offsetHeight+6,bl=bn.offsetLeft-bn.offsetWidth/2,br=bl+bn.offsetWidth;
     W.seats.forEach(S=>{if(!S.label||S.off||S.lx==null)return;const lw=S.label.offsetWidth/2,lh=S.label.offsetHeight;if(S.ly-lh<bb&&S.ly>bn.offsetTop&&S.lx+lw>bl&&S.lx-lw<br)S.ly=bb+lh;});
   }
+  // yan yana düşen plakalar birbirinin üstüne binmesin: yatayda iki yana açılır, ekran dışına taşmaz
+  {
+    const vis=W.seats.filter(S=>S.label&&!S.off&&S.lx!=null).sort((a,b)=>a.lx-b.lx);
+    for(let pass=0;pass<2;pass++)for(let k=1;k<vis.length;k++){
+      const A=vis[k-1],B=vis[k],need=(A.label.offsetWidth+B.label.offsetWidth)/2+6;
+      if(Math.abs(A.ly-B.ly)<Math.max(A.label.offsetHeight,B.label.offsetHeight)&&B.lx-A.lx<need){const d=(need-(B.lx-A.lx))/2;A.lx-=d;B.lx+=d;}
+    }
+    vis.forEach(S=>{const hw=S.label.offsetWidth/2;S.lx=cl(S.lx,hw+4,Math.max(hw+4,w-hw-4));});
+  }
   // konuşma balonu plakanın üstünde durur; üstte yer yoksa (kart/pot göstergesi, afiş, ekran kenarı) yana ya da alta geçer
   const tops=[hud,bn].filter(e=>e&&!e.hidden&&e.offsetHeight).map(e=>({b:e.offsetTop+e.offsetHeight,l:e.offsetLeft-e.offsetWidth/2,r:e.offsetLeft+e.offsetWidth/2}));
   W.seats.forEach(S=>{

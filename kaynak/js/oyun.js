@@ -15,7 +15,7 @@ const STORE='vegas-yolu-v1';
 const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&!!window.matchMedia&&matchMedia('(pointer:coarse)').matches);
 // Kariyer cüzdanı: oyuna bu parayla başlarsın; masaya giriş ücretiyle oturur, kalkınca fişlerini nakde çevirirsin.
 const START_CASH=20000;
-const defSave=()=>({unlocked:1,conquered:[],seen:[],ach:{},cash:START_CASH,rep:{},stats:{hands:0,won:0,best:0,bestCur:'₺'},settings:{speed:'normal',four:false,free:false,sound:true,music:true,musicVol:'normal',body:true,view:'3d',notes:true,follow:true,gfx:MOBILE?'mid':'high',bright:'normal',boardHud:true,talk:true}});
+const defSave=()=>({unlocked:1,conquered:[],seen:[],ach:{},cash:START_CASH,rep:{},stats:{hands:0,won:0,best:0,bestCur:'₺'},settings:{speed:'normal',four:false,free:false,sound:true,music:true,musicVol:'normal',body:true,view:'3d',notes:true,follow:true,gfx:MOBILE?'mid':'high',bright:'normal',boardHud:true,talk:true,autoNext:false,ffFold:false}});
 function mergeSave(s){const d=defSave();return Object.assign(d,s,{stats:Object.assign(d.stats,s.stats||{}),settings:Object.assign(d.settings,s.settings||{}),rep:s.rep||{},_old:s.cash==null});}
 function loadSave(){
   try{const raw=localStorage.getItem(STORE);if(raw)return mergeSave(JSON.parse(raw));}catch(e){}
@@ -442,6 +442,7 @@ function show(id){
   if(id==='scr-menu')renderMenu();
   if(id==='scr-career')renderCareer();
   window.scrollTo(0,0);
+  if(window.vyArm)vyArm();
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b)show(b.dataset.go);});
 
@@ -499,8 +500,32 @@ function renderCareer(){
 }
 
 /* ================= Ayarlar & modal ================= */
-function openModal(html){$('#sheet').innerHTML=html;$('#modal').hidden=false;const f=$('#sheet button');if(f)f.focus();}
-function closeModal(){$('#modal').hidden=true;}
+let _mFocus=null;
+function openModal(html){
+  const m=$('#modal');
+  if(m.hidden)_mFocus=document.activeElement;
+  $('#sheet').innerHTML=html;$('#sheet').scrollTop=0;m.hidden=false;
+  const f=$('#sheet .row .btn:not(.ghost)')||$('#sheet button');if(f)f.focus({preventScroll:true});
+  if(window.vyArm)vyArm();
+}
+function closeModal(){
+  const m=$('#modal');if(m.hidden)return;
+  m.hidden=true;
+  const f=_mFocus;_mFocus=null;
+  if(f&&f.isConnected&&f.offsetParent!==null)try{f.focus({preventScroll:true});}catch(e){}
+}
+// Esc: açık pencereyi kapatır (kilitli bitiş pencereleri hariç). Tab pencerenin içinde döner.
+document.addEventListener('keydown',e=>{
+  const m=$('#modal');if(m.hidden)return;
+  if(e.key==='Escape'){if(!m.dataset.lock){e.preventDefault();closeModal();}return;}
+  if(e.key!=='Tab')return;
+  const fs=$$('#sheet button:not(:disabled),#sheet input,#sheet a[href],#sheet select,#sheet textarea,#sheet summary').filter(x=>x.offsetParent!==null);
+  if(!fs.length)return;
+  const a=fs[0],z=fs[fs.length-1];
+  if(!$('#sheet').contains(document.activeElement)){e.preventDefault();a.focus();}
+  else if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus();}
+  else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus();}
+});
 $('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!$('#modal').dataset.lock)closeModal();});
 function applySettings(){document.body.classList.toggle('four',!!SAVE.settings.four);const sb=$('#g-sound');if(sb)sb.setAttribute('aria-pressed',SAVE.settings.sound!==false);Sahne.applySettings();SFX.applyMusic();if(G){G._mk='';G._bh='';render();}}
 $('#g-sound').onclick=()=>{SAVE.settings.sound=SAVE.settings.sound===false;persist();applySettings();SFX.play('deal');};
@@ -508,23 +533,33 @@ function openSettings(){
   const s=SAVE.settings;
   const seg=(k,v,l)=>`<button data-k="${k}" data-v="${v}" aria-pressed="${s[k]===v}">${l}</button>`;
   const tog=(k)=>`<label class="switch"><input type="checkbox" data-t="${k}" ${s[k]?'checked':''}><span aria-hidden="true"></span></label>`;
+  const row=(b,d,c)=>`<div class="set-row"><div><b>${b}</b><small>${d}</small></div>${c}</div>`;
   openModal(`<h3>Ayarlar</h3>
-    <div class="set-row"><div><b>Cihaz</b><small>Arayüz düzeni: telefonda hamle düğmeleri hep altta, bilgisayarda yan paneller açık</small></div><div class="seg" id="set-cihaz">${[['telefon','Telefon'],['tablet','Tablet'],['pc','Bilgisayar']].map(([v,l])=>`<button data-cz="${v}" aria-pressed="${(window.VYCihaz?VYCihaz.get():'pc')===v}">${l}</button>`).join('')}</div></div>
-    <div class="set-row"><div><b>Oyun hızı</b><small>Rakiplerin ne kadar hızlı oynadığı</small></div><div class="seg">${seg('speed','normal','Normal')}${seg('speed','fast','Hızlı')}</div></div>
-    <div class="set-row"><div><b>Sesler</b><small>Kart dağıtma, fiş ve kazanma sesleri</small></div>${tog('sound')}</div>
-    <div class="set-row"><div><b>Müzik</b><small>Her salonun kendi müziği çalar: radyoda arabesk ve türkü, fasıl, ud, bossa nova, vals, swing</small></div>${tog('music')}</div>
-    <div class="set-row"><div><b>Müzik sesi</b><small>Ortam müziğinin yüksekliği</small></div><div class="seg">${seg('musicVol','low','Kısık')}${seg('musicVol','normal','Normal')}${seg('musicVol','high','Yüksek')}</div></div>
-    <div class="set-row"><div><b>Rakip konuşmaları</b><small>Rakipler masada konuşur; balonlar başlarının üstünde çıkar</small></div>${tog('talk')}</div>
-    <div class="set-row"><div><b>Masa görünümü</b><small>${Sahne.ok?'3D salonda masaya oturursun; düz masa daha hafiftir':'Bu bilgisayarda 3D (WebGL) desteklenmiyor'}</small></div><div class="seg">${Sahne.ok?seg('view','3d','3D salon'):''}${seg('view','2d','Düz masa')}</div></div>
-    <div class="set-row"><div><b>Grafik kalitesi</b><small>Gölgeler, arka plandaki insanlar ve çözünürlük; tamamı yeni masada uygulanır</small></div><div class="seg">${seg('gfx','high','Yüksek')}${seg('gfx','mid','Dengeli')}${seg('gfx','low','Hafif')}</div></div>
-    <div class="set-row"><div><b>Salon parlaklığı</b><small>Ekran karanlık ya da parlak geliyorsa ayarla</small></div><div class="seg">${seg('bright','dim','Loş')}${seg('bright','normal','Normal')}${seg('bright','bright','Aydınlık')}</div></div>
-    <div class="set-row"><div><b>Masa kartları ekranda da</b><small>Ortadaki kartlar ve pot üstte ayrıca gösterilir; ışık ne olursa olsun okunur</small></div>${tog('boardHud')}</div>
-    <div class="set-row"><div><b>Kendi bedenim görünsün</b><small>3D masada kendi kollarını ve ellerini görürsün; karakterinin kıyafeti ve teni kullanılır</small></div>${tog('body')}</div>
-    <div class="set-row"><div><b>Kamera sırası geleni izlesin</b><small>3D'de görüş dışındaki oyuncu oynarken başını ona çevirir</small></div>${tog('follow')}</div>
-    <div class="set-row"><div><b>Davranış notları (kariyer)</b><small>Gördüğün davranışlar yorumsuz yazılır; kapatırsan yalnızca gözlerine güvenirsin</small></div>${tog('notes')}</div>
-    <div class="set-row"><div><b>Dört renkli deste</b><small>Karo mavi, sinek yeşil olur; renkleri karıştırmazsın</small></div>${tog('four')}</div>
-    <div class="set-row"><div><b>Serbest mod</b><small>Para yetmese de her masaya oturursun; kazanç ve kayıp cüzdana işlemez</small></div>${tog('free')}</div>
-    <div class="set-row"><div><b>İlerlemeyi sıfırla</b><small>Cüzdan, tanınırlık, fethedilen masalar, dersler ve istatistikler silinir</small></div><button class="btn ghost small" id="reset-btn">Sıfırla</button></div>
+    <h4 class="set-h">Oyun</h4>
+    ${row('Oyun hızı','Rakiplerin ne kadar hızlı oynadığı',`<div class="seg">${seg('speed','normal','Normal')}${seg('speed','fast','Hızlı')}${seg('speed','turbo','Çok hızlı')}</div>`)}
+    ${row('Sonraki el kendiliğinden başlasın','El bitince birkaç saniye bekler, sonra kartlar dağıtılır; Enter ile beklemeden geçersin',tog('autoNext'))}
+    ${row('Çekilince eli hızlı geç','Bıraktığın elin kalanı hızlı oynanır. Kapalıyken rakiplerini izlersin; istediğin elde “Eli hızlı geç” düğmesine basarsın',tog('ffFold'))}
+    ${row('Rakip konuşmaları','Rakipler masada konuşur; balonlar başlarının üstünde çıkar',tog('talk'))}
+    ${row('Davranış notları (kariyer)','Gördüğün davranışlar yorumsuz yazılır; kapatırsan yalnızca gözlerine güvenirsin',tog('notes'))}
+    ${row('Dört renkli deste','Karo mavi, sinek yeşil olur; renkleri karıştırmazsın',tog('four'))}
+    <h4 class="set-h">Ses</h4>
+    ${row('Sesler','Kart dağıtma, fiş ve kazanma sesleri',tog('sound'))}
+    ${row('Müzik','Her salonun kendi müziği çalar: radyoda arabesk ve türkü, fasıl, ud, bossa nova, vals, swing',tog('music'))}
+    ${row('Müzik sesi','Ortam müziğinin yüksekliği',`<div class="seg">${seg('musicVol','low','Kısık')}${seg('musicVol','normal','Normal')}${seg('musicVol','high','Yüksek')}</div>`)}
+    <h4 class="set-h">Görünüm</h4>
+    ${row('Cihaz','Arayüz düzeni: telefonda hamle düğmeleri hep altta, bilgisayarda yan paneller açık',`<div class="seg" id="set-cihaz">${[['telefon','Telefon'],['tablet','Tablet'],['pc','Bilgisayar']].map(([v,l])=>`<button data-cz="${v}" aria-pressed="${(window.VYCihaz?VYCihaz.get():'pc')===v}">${l}</button>`).join('')}</div>`)}
+    ${row('Masa görünümü',Sahne.ok?'3D salonda masaya oturursun; düz masa daha hafiftir':'Bu cihazda 3D (WebGL) desteklenmiyor',`<div class="seg">${Sahne.ok?seg('view','3d','3D salon'):''}${seg('view','2d','Düz masa')}</div>`)}
+    ${row('Grafik kalitesi','Gölgeler, arka plandaki insanlar ve çözünürlük; tamamı yeni masada uygulanır',`<div class="seg">${seg('gfx','high','Yüksek')}${seg('gfx','mid','Dengeli')}${seg('gfx','low','Hafif')}</div>`)}
+    ${row('Salon parlaklığı','Ekran karanlık ya da parlak geliyorsa ayarla',`<div class="seg">${seg('bright','dim','Loş')}${seg('bright','normal','Normal')}${seg('bright','bright','Aydınlık')}</div>`)}
+    ${row('Masa kartları ekranda da','Ortadaki kartlar ve pot üstte ayrıca gösterilir; ışık ne olursa olsun okunur',tog('boardHud'))}
+    ${row('Kendi bedenim görünsün','3D masada kendi kollarını ve ellerini görürsün; karakterinin kıyafeti ve teni kullanılır',tog('body'))}
+    ${row('Kamera sırası geleni izlesin','3D masada görüş dışındaki oyuncu oynarken başını ona çevirir',tog('follow'))}
+    <h4 class="set-h">Kariyer</h4>
+    ${row('Serbest mod','Para yetmese de her masaya oturursun; kazanç ve kayıp cüzdana işlemez',tog('free'))}
+    ${row('İlerlemeyi sıfırla','Cüzdan, tanınırlık, fethedilen masalar, dersler ve istatistikler silinir',`<button class="btn ghost small" id="reset-btn">Sıfırla</button>`)}
+    <details class="keys"><summary>Klavye kısayolları</summary>
+      <dl><dt><kbd>F</kbd></dt><dd>Çekil</dd><dt><kbd>C</kbd></dt><dd>Kontrol / Gör</dd><dt><kbd>R</kbd></dt><dd>Bahis / Artır</dd><dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>Min, ½ pot, ¾ pot, pot, all-in</dd><dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Bahsi bir büyük kör artır / azalt</dd><dt><kbd>Enter</kbd></dt><dd>Sonraki el · çekildiysen eli hızlı geç</dd><dt><kbd>A</kbd> <kbd>D</kbd></dt><dd>3D masada etrafına bak</dd><dt><kbd>V</kbd></dt><dd>Kamerayı sıfırla</dd><dt><kbd>Esc</kbd></dt><dd>Açık pencereyi kapat</dd></dl>
+    </details>
     <div class="row"><button class="btn" id="set-close">Tamam</button></div>`);
   $$('#sheet [data-cz]').forEach(b=>b.onclick=()=>{if(window.VYCihaz)VYCihaz.set(b.dataset.cz);$$('#sheet [data-cz]').forEach(x=>x.setAttribute('aria-pressed',x===b));});
   $$('#sheet .seg button[data-k]').forEach(b=>b.onclick=()=>{s[b.dataset.k]=b.dataset.v;persist();applySettings();$$(`#sheet .seg button[data-k="${b.dataset.k}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b));});
@@ -545,16 +580,31 @@ $('#g-settings').onclick=openSettings;
 window.vyBack=()=>{
   if(!$('#modal').hidden){if(!$('#modal').dataset.lock)closeModal();return true;}
   if(CUR==='scr-game'){$('#g-leave').click();return true;}
+  if(CUR==='scr-ogame'){$('#og-leave').click();return true;}
   if(CUR==='scr-casino'){$('#c-leave').click();return true;}
   if(CUR==='scr-hall'){$('#h-leave').click();return true;}
   if(CUR!=='scr-menu'){show('scr-menu');return true;}
   return false;
 };
+/* Web ve PWA: geri tuşu siteden çıkarmak yerine önce pencereyi kapatır, masadan kalkmayı sorar ya da menüye döner.
+   Geçmişe tek bir nöbetçi kayıt konur; geri basılınca vyBack çalışır, dönülecek yer kaldıysa nöbetçi yeniden kurulur. */
+(()=>{
+  if(!/^https?:$/.test(location.protocol)||location.hostname==='appassets.androidplatform.net'||!history.pushState)return;
+  let armed=false;
+  const need=()=>CUR!=='scr-menu'||!$('#modal').hidden;
+  window.vyArm=()=>{if(armed||!need())return;try{history.pushState({vy:1},'');armed=true;}catch(e){}};
+  addEventListener('popstate',()=>{
+    armed=false;
+    if(document.querySelector('.uy-ov')){armed=true;try{history.pushState({vy:1},'');}catch(e){armed=false;}return;}
+    try{window.vyBack();}catch(e){}
+    vyArm();
+  });
+})();
 
 /* ================= OYUN MOTORU ================= */
 let G=null;
 const ABORT={abort:true};
-const spd=()=>SAVE.settings.speed==='fast'?.35:1;
+const spd=()=>(G&&G.ff?.12:1)*(SAVE.settings.speed==='turbo'?.16:SAVE.settings.speed==='fast'?.35:1);
 async function wait(tok,ms){await sleep(ms*spd());if(!G||G.tok!==tok)throw ABORT;}
 const money=n=>fmtM(n,G.venue.cur);
 const canAct=p=>p.inHand&&!p.folded&&!p.allIn;
@@ -619,7 +669,7 @@ function startGame(venue,opt){
   $('#coach-narr').hidden=true;
   $('#coach-body').innerHTML=coachIdle();
   $('#v3-me').innerHTML='';$('#v3-board').innerHTML='';$('#emote-list').hidden=true;$('#say-me').hidden=true;
-  $('#a-human').hidden=true;$('#a-next').hidden=true;$('#a-status').textContent='';
+  $('#a-human').hidden=true;$('#a-next').hidden=true;$('#a-ff').hidden=true;$('#a-status').textContent='';
   buildTable();
   show('scr-game');
   if(G.v3)G.intro=Sahne.start(G,$('#v3'),{intro:G.fromHall?'sit':null});else Sahne.stop();
@@ -772,7 +822,7 @@ async function runTable(tok){
 
 async function playHand(tok){
   const g=G,V=g.venue;
-  g.handNo++;g.board=[];g.pot=0;g.street=0;g.winSet=null;g.phase='deal';g.nRaises=0;g.lastAgg=null;g.meRaised=false;
+  g.ff=false;g.handNo++;g.board=[];g.pot=0;g.street=0;g.winSet=null;g.phase='deal';g.nRaises=0;g.lastAgg=null;g.meRaised=false;
   if(V.levels&&V.blindUp&&g.handNo>1&&(g.handNo-1)%V.blindUp===0&&g.lvlN<V.levels.length-1){
     g.lvlN++;[g.sb,g.bb]=V.levels[g.lvlN];setVInfo();SFX.play('bell');
     addLog(`Körler yükseldi: ${money(g.sb)} / ${money(g.bb)}`,'sep');toast('Körler yükseldi',`${money(g.sb)} / ${money(g.bb)} · seviye ${g.lvlN+1}`,'info');
@@ -906,7 +956,7 @@ function applyAction(p,a){
   else if(p.allIn)SFX.play('allin');
   else SFX.play('chip',cls==='raise'?4:2);
   const who=p.human?'Sen':p.name;
-  const ht=p.human?txt.replace('Çekildi','çekildin').replace('Gördü','gördün').replace('Artırdı','artırdın'):txt.toLocaleLowerCase('tr-TR');
+  const ht=p.human?txt.replace('Çekildi','çekildin').replace('Gördü','gördün').replace('Artırdı','artırdın').replace('Kontrol','kontrol ettin').replace('Bahis','bahis yaptın'):txt.toLocaleLowerCase('tr-TR');
   addLog(`${who}: ${ht}`,p.human?'me':'');
   return {type:a.type==='raise'&&cls!=='raise'?'call':a.type,allIn:p.allIn,bet:p.bet};
 }
@@ -931,7 +981,17 @@ async function botTurn(tok,p){
   return a;
 }
 function waitNext(tok){
-  return new Promise((res,rej)=>{G.reject=rej;G.nextResolve=()=>{G.nextResolve=null;G.reject=null;$('#a-next').hidden=true;$('#a-status').textContent='Kartlar dağıtılıyor…';res();};setActions('done');});
+  return new Promise((res,rej)=>{
+    const g=G;g.reject=rej;
+    g.nextResolve=()=>{clearTimeout(g._an);g.nextResolve=null;g.reject=null;$('#a-next').hidden=true;$('#a-status').textContent='Kartlar dağıtılıyor…';res();};
+    setActions('done');
+    // Otomatik mod: sonucu okuyacak kadar bekler, sonra kendiliğinden devam eder (açık pencere varsa bekler)
+    if(SAVE.settings.autoNext){
+      const k=SAVE.settings.speed==='turbo'?.3:SAVE.settings.speed==='fast'?.6:1;
+      const tick=()=>{if(G!==g||!g.nextResolve)return;if(!$('#modal').hidden){g._an=setTimeout(tick,700);return;}g.nextResolve();};
+      g._an=setTimeout(tick,4200*k);
+    }
+  });
 }
 
 /* ---------- Bot zekâsı ---------- */
@@ -1254,6 +1314,8 @@ function setActions(state,p){
   const g=G;
   $('#a-human').hidden=state!=='human';
   $('#a-next').hidden=state!=='done';
+  const me0=g.players[0];
+  $('#a-ff').hidden=!(state==='wait'&&me0.folded&&me0.inHand&&!g.ff);
   const st=$('#a-status');
   if(state==='wait'){
     const me=g.players[0];
@@ -1294,6 +1356,7 @@ $('#presets').addEventListener('click',e=>{
 function humanAct(type){
   if(!G||!G.resolve)return;
   const p=G.players[0],L=G.L;
+  if(type==='fold'&&SAVE.settings.ffFold)G.ff=true;
   if(type==='fold'&&L.toCall===0&&G.venue.training)narrate('<b>Not:</b> Önünde bahis yokken çekildin. Kontrol bedavaydı; bir dahaki sefere kontrol ederek kartları görmeye devam edebilirsin.');
   if(type==='call')G.resolve(L.toCall===0?{type:'check'}:{type:'call'});
   else if(type==='fold')G.resolve({type:'fold'});
@@ -1303,11 +1366,20 @@ $('#a-fold').onclick=()=>humanAct('fold');
 $('#a-call').onclick=()=>humanAct('call');
 $('#a-raise').onclick=()=>humanAct('raise');
 $('#a-next').onclick=()=>{if(G&&G.nextResolve)G.nextResolve();};
+$('#a-ff').onclick=()=>{if(G){G.ff=true;$('#a-ff').hidden=true;}};
+// − / + : bahsi bir büyük kör kadar oynat
+function stepRaise(dir){
+  if(!G||!G.resolve||!G.L||!G.L.canRaise)return;
+  const a=$('#a-amt');a.value=clamp(snap(+a.value+dir*G.bb,G.L)+(dir>0?0:0),G.L.minTo,G.L.maxTo);updateRaiseLabel();
+}
+$$('#a-raise-box .stp').forEach(b=>b.onclick=()=>stepRaise(+b.dataset.s));
 document.addEventListener('keydown',e=>{
   if(CUR!=='scr-game'||!$('#modal').hidden||e.ctrlKey||e.metaKey||e.altKey)return;
   const tag=(e.target.tagName||'').toLowerCase();if(tag==='input'&&e.target.type!=='range')return;
   const k=e.key.toLowerCase();
   if(G&&G.resolve&&/^[1-5]$/.test(k)&&G.L&&G.L.canRaise){const pb=$$('#presets button')[+k-1];if(pb)pb.click();e.preventDefault();return;}
+  if(G&&G.resolve&&(k==='+'||k==='='||k==='-'||k==='_')){stepRaise(k==='-'||k==='_'?-1:1);e.preventDefault();return;}
+  if(k==='enter'&&tag!=='button'&&!$('#a-ff').hidden){G.ff=true;$('#a-ff').hidden=true;e.preventDefault();return;}
   if(G&&G.resolve){if(k==='f'){humanAct('fold');e.preventDefault();}else if(k==='c'){humanAct('call');e.preventDefault();}else if(k==='r'){humanAct('raise');e.preventDefault();}}
   else if(G&&G.nextResolve&&(k==='enter'||k===' ')){if(tag==='button'&&e.target.id!=='a-next')return;e.preventDefault();G.nextResolve();}
 });

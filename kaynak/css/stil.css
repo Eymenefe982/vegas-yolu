@@ -1313,3 +1313,36 @@ html[data-cihaz="tablet"] .cs-ctrl,html[data-cihaz="tablet"] .c-ctrl{position:st
   .lnav .grp{display:flex;align-items:center;gap:4px;white-space:nowrap;padding:0 2px 0 12px;font-size:10px}
   .lnav .grp:first-child{padding-left:0}
 }
+
+/* ===== Kullanılabilirlik düzeltmeleri ===== */
+/* Bahis kutusu: − / + adım düğmeleri */
+.slider .stp{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:800;line-height:1;color:var(--text);border:1px solid var(--gold-line,var(--line));background:rgba(0,0,0,.25)}
+.slider .stp:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.slider .stp:active{transform:translateY(1px)}
+.slider input{min-width:96px}
+html[data-cihaz="telefon"] .slider .stp,html[data-cihaz="tablet"] .slider .stp{width:40px;height:40px}
+/* Ayarlar: bölüm başlıkları ve kısayol listesi */
+.sheet .set-h{margin:14px 0 0;font:800 11px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);opacity:.85}
+.sheet .set-h:first-of-type{margin-top:2px}
+.sheet .set-row:last-of-type{border-bottom:0}
+.set-row>div:first-child{min-width:0;flex:1}
+.keys{border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
+.keys summary{cursor:pointer;font-weight:800;font-size:13px;color:var(--muted);list-style:none}
+.keys summary::before{content:"▸ ";color:var(--accent)}
+.keys[open] summary::before{content:"▾ "}
+.keys dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:10px 0 0;font-size:13px}
+.keys dt{white-space:nowrap}
+.keys dd{margin:0;color:#d8cdb6}
+.keys kbd{display:inline-block;min-width:20px;text-align:center;padding:3px 6px;background:rgba(255,255,255,.08);opacity:1;color:var(--text)}
+/* Kariyer girişindeki açılır özet */
+.how{max-width:64ch;margin:-4px 0 18px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:rgba(0,0,0,.18)}
+.how summary{cursor:pointer;font-weight:800;font-size:13px;color:var(--accent);list-style:none}
+.how summary::before{content:"▸ "}
+.how[open] summary::before{content:"▾ "}
+.how ul{margin:10px 0 2px;padding-left:18px;display:grid;gap:6px;font-size:14px;color:#d9cfbb}
+/* Eli hızlı geç düğmesi eylem çubuğunda sağa yaslı */
+#a-ff{margin-left:auto}
+/* Bahis miktarı rakamları sabit genişlikte durur, düğmeler oynamaz */
+.slider output{min-width:92px}
+/* Klavye odağı her yerde görünsün */
+.btn:focus-visible,.act:focus-visible,.presets button:focus-visible,.seg button:focus-visible,.stp:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}

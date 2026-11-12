@@ -79,7 +79,15 @@
       <h2 class="h-display">Kariyer</h2>
       <span class="muted" id="career-sum"></span>
     </div>
-    <p class="lead">Masalar kolaydan zora dizildi. Cebindeki parayla başlarsın: giriş ücretini ödeyebildiğin masaya oturursun, kalkınca fişlerin nakde döner. Hedef fişe ulaşır ya da bütün rakipleri kaldırırsan masayı fethedersin; fethettiğin masada adın duyulur, oturduğunda seni tanırlar. Kariyerde koç yok: olasılığı kafandan hesaplar, rakiplerini kıyafetinden, servetinden ve davranışından okursun. Üst masalarda oyuncular kendini daha az belli eder.</p>
+    <p class="lead">Masalar kolaydan zora dizili. Girişini ödeyebildiğin masaya otur; hedef fişe ulaş ya da bütün rakipleri kaldır, masa senin olsun.</p>
+    <details class="how"><summary>Kariyer nasıl işler?</summary>
+      <ul>
+        <li><b>Cüzdan:</b> giriş ücreti oturunca cüzdandan düşer, kalkınca önündeki fişler nakde döner.</li>
+        <li><b>Fetih:</b> hedef fişe ulaşınca ya da bütün rakipler kalkınca masa fethedilir ve sıradaki salon açılır.</li>
+        <li><b>Tanınırlık:</b> fethettiğin masada adın duyulur; oturduğunda seni tanırlar, ev sahibi girişte ikram yapar.</li>
+        <li><b>Koç yok:</b> olasılığı kafandan hesaplar, rakiplerini kıyafetinden, servetinden ve davranışından okursun. Üst masalarda oyuncular kendini daha az belli eder.</li>
+      </ul>
+    </details>
     <div class="venues" id="venues"></div>
   </div>
 </section>
@@ -150,7 +158,7 @@
     <div class="a-human" id="og-human" hidden>
       <div class="a-raise" id="og-raise-box">
         <div class="presets"><button data-p="min">Min</button><button data-p="half">½ Pot</button><button data-p="tq">¾ Pot</button><button data-p="pot">Pot</button><button data-p="all">All-in</button></div>
-        <div class="slider"><input type="range" id="og-amt" aria-label="Bahis miktarı"><output id="og-amt-out" for="og-amt"></output></div>
+        <div class="slider"><button type="button" class="stp" data-s="-1" aria-label="Bahsi bir büyük kör azalt" title="Bir büyük kör azalt">−</button><input type="range" id="og-amt" aria-label="Bahis miktarı"><button type="button" class="stp" data-s="1" aria-label="Bahsi bir büyük kör artır" title="Bir büyük kör artır">+</button><output id="og-amt-out" for="og-amt"></output></div>
       </div>
       <div class="a-btns">
         <button class="act fold" id="og-fold">Çekil <kbd>F</kbd></button>
@@ -224,7 +232,7 @@
         <div class="presets" id="presets">
           <button data-p="min">Min</button><button data-p="half">½ Pot</button><button data-p="tq">¾ Pot</button><button data-p="pot">Pot</button><button data-p="all">All-in</button>
         </div>
-        <div class="slider"><input type="range" id="a-amt" aria-label="Bahis miktarı"><output id="a-amt-out" for="a-amt"></output></div>
+        <div class="slider"><button type="button" class="stp" data-s="-1" aria-label="Bahsi bir büyük kör azalt" title="Bir büyük kör azalt (−)">−</button><input type="range" id="a-amt" aria-label="Bahis miktarı"><button type="button" class="stp" data-s="1" aria-label="Bahsi bir büyük kör artır" title="Bir büyük kör artır (+)">+</button><output id="a-amt-out" for="a-amt"></output></div>
       </div>
       <div class="a-btns">
         <button class="act fold" id="a-fold">Çekil <kbd>F</kbd></button>
@@ -232,6 +240,7 @@
         <button class="act raise" id="a-raise">Artır <kbd>R</kbd></button>
       </div>
     </div>
+    <button class="btn ghost" id="a-ff" hidden title="Çekildiğin elin kalanını hızlandır">Eli hızlı geç <kbd>Enter</kbd></button>
     <button class="btn" id="a-next" hidden>Sonraki el <kbd>Enter</kbd></button>
   </footer>
 </section>
