@@ -169,15 +169,20 @@ function ik(S,H,L1,L2,pole,E){
 }
 function makeHand(sk,side){
   const g=new T.Group();
-  const palm=mesh(box(.07,.024,.08),sk);palm.position.set(0,0,.04);g.add(palm);
+  // yuvarlatılmış kapsüller: avuç, parmak boğumları ve başparmak kutu gibi durmaz
+  const cap=(r,len)=>geo(`cz${r}_${len}`,()=>new T.CapsuleGeometry(r,len,4,10).rotateX(PI/2));
+  const palm=mesh(sph(.036,14,10),sk);palm.scale.set(1,.42,1.15);palm.position.set(0,0,.042);g.add(palm);
+  const heel=mesh(sph(.03,10,8),sk);heel.scale.set(1.1,.5,.9);heel.position.set(side*.008,-.004,.015);g.add(heel);   // avuç içi (başparmak yastığı)
   // dört parmak, her biri iki boğum: işaret ve yüzük parmağı biraz kısa, orta uzun, serçe en kısa
-  const fl=[.05,.056,.052,.042];
+  const fl=[.05,.056,.052,.042],nail=mat('#e8cfc4',{roughness:.3});
   for(let i=0;i<4;i++){
-    const x=(i-1.5)*.0165*side,L=fl[i];
-    const a=mesh(box(.0145,.0145,L),sk);a.position.set(x,-.006,.08+L/2);a.rotation.x=.3;g.add(a);
-    const b=mesh(box(.0135,.0135,L*.7),sk);b.position.set(x,-.015-L*.1,.08+L*.95);b.rotation.x=.7;g.add(b);
+    const x=(i-1.5)*.0165*side,L=fl[i],w=.0072-(i===3?.0008:0);
+    const kn=mesh(sph(w*1.15,8,6),sk,false);kn.position.set(x,.003,.074);g.add(kn);   // boğum çıkıntısı
+    const a=mesh(cap(w,L-w*2),sk);a.position.set(x,-.006,.08+L/2);a.rotation.x=.3;g.add(a);
+    const b=mesh(cap(w*.93,L*.7-w*1.8),sk);b.position.set(x,-.015-L*.1,.08+L*.95);b.rotation.x=.7;g.add(b);
+    const n=mesh(box(w*1.2,.0014,.009),nail,false);n.position.set(x,-.0035-L*.1-w*.88,.08+L*.95+L*.33);n.rotation.x=.7;g.add(n);   // tırnak
   }
-  const th=mesh(box(.021,.02,.05),sk);th.position.set(side*.04,-.004,.03);th.rotation.y=-side*.55;g.add(th);
+  const th=mesh(cap(.0105,.034),sk);th.position.set(side*.042,-.004,.034);th.rotation.y=-side*.55;th.rotation.x=.12;g.add(th);
   return g;
 }
 function dressTop(sp,d,o){
@@ -352,6 +357,12 @@ function faceDetail(face,d,skin,fp,fem){
     if(fp.lash)add(mesh(box(.034,.0035,.006),lash,false),s*.034,.0335,0,1,1,1,-s*.12);
   }
   add(mesh(sph(.02,8,6),shadow(shade(sk,.5),.22),false),0,-.026,.003,1.4,.5,.7);
+  // burun delikleri, üst göz kapağı kıvrımı ve dudak arası çizgisi: yüzü düz bir toptan ayırır
+  for(const s of[-1,1]){
+    add(mesh(sph(.0045,6,5),shadow('#1a0c0a',.55),false),s*.011,-.02,.014,1,.6,.5);
+    add(mesh(box(.034,.0026,.004),shadow(shade(sk,.45),.4),false),s*.034,.034+(fem?.003:0),.0,1,1,1,-s*.1);
+  }
+  add(mesh(box(.03,.0018,.004),shadow('#2a0f10',.55),false),0,-.048,-.0045);
   if(fp.lines>0){
     const lm=shadow(shade(sk,.62),.2+.3*fp.lines);
     for(const s of[-1,1]){add(mesh(box(.036,.0022,.004),lm,false),s*.034,-.0075,.001,1,1,1,s*.08);add(mesh(box(.003,.04,.004),lm,false),s*.036,-.04,.001,1,1,1,s*.35);}
@@ -361,6 +372,43 @@ function faceDetail(face,d,skin,fp,fem){
 }
 // Kumaş deseni: ince çizgi ya da kareli
 function patTex(kind,c){return ctex(64,64,(x,w,h)=>{x.fillStyle=c;x.fillRect(0,0,w,h);if(kind==='pin'){x.fillStyle='rgba(255,255,255,.22)';for(let i=0;i<w;i+=8)x.fillRect(i,0,1.4,h);}else{x.fillStyle='rgba(0,0,0,.18)';for(let i=0;i<w;i+=16){x.fillRect(i,0,6,h);x.fillRect(0,i,w,6);}x.fillStyle='rgba(255,255,255,.1)';x.fillRect(0,0,w,2);}},{rep:[3,3]});}
+
+/* ---------- gerçekçi ten, saç teli ve göz dokuları (bir kez üretilir, paylaşılır) ---------- */
+let SKT=null,HRT=null;const IRT={};
+// Ten: hafif kızarıklık/leke ve gözenek kabartması; renk malzemeden gelir, doku sadece detay ekler
+function skinMat(c,tier){
+  const k='skin|'+c+'|'+(Q()==='low'?0:1);let m=MC.get(k);if(m)return m;
+  if(!SKT)SKT={
+    map:ctex(256,256,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);blot(x,w,h,70,'rgba(200,110,105,.06)',14,44);blot(x,w,h,60,'rgba(110,70,35,.09)',10,34);blot(x,w,h,40,'rgba(255,255,255,.18)',10,30);speckle(x,w,h,3500,.09,1);},{keep:true}),
+    bump:ctex(128,128,(x,w,h)=>{x.fillStyle='#808080';x.fillRect(0,0,w,h);speckle(x,w,h,1800,.9,1);blot(x,w,h,30,'rgba(255,255,255,.08)',6,18);},{srgb:false,keep:true,rep:[2,2]}),
+  };
+  const o={color:c,map:SKT.map,bumpMap:SKT.bump,bumpScale:.45,roughness:.55,metalness:0,emissive:shade(c,.05)};
+  // sheen: derinin üstündeki ince tüy/yağ tabakası; ışık kenardan gelince ten yumuşak parlar
+  m=Q()==='low'?new T.MeshStandardMaterial(o):new T.MeshPhysicalMaterial(Object.assign(o,{sheen:.55,sheenRoughness:.55,sheenColor:new T.Color(shade(c,1.25)),clearcoat:.06,clearcoatRoughness:.5}));
+  MC.set(k,m);return m;
+}
+// Saç: boydan boya ince teller (küre UV'sinde dikey çizgiler tepeden kulağa iner)
+function hairMat(c,rough){
+  const k='hair|'+c+'|'+rough;let m=MC.get(k);if(m)return m;
+  if(!HRT)HRT={
+    map:ctex(256,128,(x,w,h)=>{x.fillStyle='#d8d8d8';x.fillRect(0,0,w,h);for(let i=0;i<260;i++){const v=R();x.fillStyle=v>.5?`rgba(255,255,255,${(v-.5)*.5})`:`rgba(0,0,0,${(.5-v)*.55})`;x.fillRect(R()*w,0,1+R()*1.4,h);}},{keep:true}),
+    bump:ctex(256,128,(x,w,h)=>{x.fillStyle='#808080';x.fillRect(0,0,w,h);for(let i=0;i<300;i++){x.fillStyle=R()>.5?'#c8c8c8':'#404040';x.fillRect(R()*w,0,1,h);}},{srgb:false,keep:true}),
+  };
+  m=new T.MeshStandardMaterial({color:c,map:HRT.map,bumpMap:HRT.bump,bumpScale:.9,roughness:rough,metalness:.05});
+  MC.set(k,m);return m;
+}
+// Göz bebeği çevresi: radyal lifler, açık iç halka, koyu limbal çember. Kutup +z'ye bakar; dikey eksen yarıçaptır.
+function irisMat(c){
+  if(IRT[c])return IRT[c];
+  const t=ctex(128,64,(x,w,h)=>{
+    x.fillStyle=shade(c,.55);x.fillRect(0,0,w,h);
+    const g=x.createLinearGradient(0,0,0,h*.5);g.addColorStop(0,shade(c,1.5));g.addColorStop(.35,shade(c,1.1));g.addColorStop(.8,shade(c,.7));g.addColorStop(1,'#0c0806');
+    x.fillStyle=g;x.fillRect(0,0,w,h*.5);
+    for(let i=0;i<90;i++){x.fillStyle=R()>.5?'rgba(255,240,210,.28)':'rgba(0,0,0,.3)';x.fillRect(R()*w,h*.04,1+R(),h*.38);}
+    x.fillStyle='#0a0706';x.fillRect(0,h*.5,w,h*.5);
+  },{keep:true});
+  return IRT[c]=new T.MeshStandardMaterial({map:t,roughness:.12,metalness:0});
+}
 
 function makePerson(d,opt){
   const tier=venueTier();
@@ -373,9 +421,9 @@ function makePerson(d,opt){
   P.fid=P.sfx.fid*(.55+.45*Math.min(1.6,P.expr));
   const bw=d.build||1,fem=d.sex==='f';P.bw=bw;
   // ten: gölge tarafı hafif sıcak kalsın diye az miktarda kendinden aydınlık
-  const skin=mat(d.skin||'#d6a482',{roughness:.58,emissive:shade(d.skin||'#d6a482',.1)});
+  const skin=skinMat(d.skin||'#d6a482',tier);
   const hc=(d.hair&&d.hair[1])||'#2a1d14';
-  const hairM=mat(hc,{roughness:(d.hair&&d.hair[0])==='slick'?.35:.62});
+  const hairM=hairMat(hc,(d.hair&&d.hair[0])==='slick'?.35:.62);
   const [kind,c1,c2]=d.top||['shirt','#dddddd'];
   const fr=tier>0?.64:tier<0?.95:.86;
   const topM=kind==='hawaii'?tmat(hawaiiTex(c1),{roughness:.8}):(d.top&&d.top[3])?tmat(patTex(d.top[3],c1),{roughness:fr}):mat(tier<0?shade(c1,.9):c1,kind==='leather'?{roughness:.3,metalness:.15}:kind==='tux'?{roughness:tier>0?.34:.5}:{roughness:fr});
@@ -400,17 +448,27 @@ function makePerson(d,opt){
   P.sh=[new T.Object3D(),new T.Object3D()];P.sh[0].position.set(sw,.44,0);P.sh[1].position.set(-sw,.44,0);
   for(const s of P.sh){spine.add(s);s.add(mesh(sph(.058*bw,12,10),kind==='dress'?skin:upM));}
   dressTop(spine,d,{kind,c1,c2,topM,innerM,skin,fz});
-  const neck=mesh(cyl(.04,.045,.12,12),skin);neck.position.set(0,.53,-.005);spine.add(neck);
+  const neck=mesh(cyl(fem?.036:.044,fem?.042:.054,.12,14),skin);neck.position.set(0,.53,-.005);spine.add(neck);
+  // boyun yanlarındaki kas hattı (kulak arkasından köprücüğe)
+  if(!fem)for(const s of[-1,1]){const sm=mesh(sph(.02,8,6),skin,false);sm.scale.set(.7,3.2,.8);sm.position.set(s*.032,.52,.012);sm.rotation.z=s*.28;spine.add(sm);}
   P.adam=mesh(sph(.012,8,6),skin,false);P.adam.scale.setScalar(fem?.6:1);P.adam.position.set(0,.505,.04);spine.add(P.adam);   // yutkunma için gırtlak
   const head=new T.Group();head.position.set(0,.57,0);spine.add(head);P.head=head;
   const face=new T.Group();face.position.set(0,.1,.005);head.add(face);P.face=face;
   const skull=mesh(sph(.1,24,18),skin);skull.scale.set(fem?.86:.9,1.08,.98);face.add(skull);
   const jaw=mesh(sph(.075,18,12),skin);jaw.scale.set((fem?.88:1)*fp.jaw,.75,1);jaw.position.set(0,-.055,.025);face.add(jaw);
   const nose=mesh(sph(.014,10,8),skin);nose.scale.set(fp.nw,1.55*fp.nh,1.3*fp.nd);nose.position.set(0,-.006,.098+(fp.nd-1)*.004);face.add(nose);
-  for(const s of[-1,1]){const e=mesh(sph(.028,10,8),skin);e.scale.set(.4,.8*fp.ear,.55*fp.ear);e.position.set(s*.09,0,-.005);face.add(e);}
-  const eyeW=mat('#f1ede5',{roughness:.3}),irisM=mat(fp.eye,{roughness:.15}),pupM=mat('#050505',{roughness:.2}),catchM=mat('#ffffff',{emissive:'#ffffff',emissiveIntensity:1.6,roughness:.1});
+  for(const s of[-1,1]){const e=mesh(sph(.028,10,8),skin);e.scale.set(.4,.8*fp.ear,.55*fp.ear);e.position.set(s*.09,0,-.005);face.add(e);
+    // kulak içi gölgesi, burun kanadı
+    const ei=mesh(sph(.016,8,6),mat(shade(d.skin||'#d6a482',.62),{roughness:.9}),false);ei.scale.set(.3,.8*fp.ear,.5*fp.ear);ei.position.set(s*.094,-.002,.002);face.add(ei);
+    const al=mesh(sph(.0075,8,6),skin);al.scale.set(1,.8,.9);al.position.set(s*.0125*fp.nw,-.013,.096+(fp.nd-1)*.004);face.add(al);}
+  // kaş kemeri, burun sırtı, çene ucu ve alın: yüz düz küre görünümünü bırakıp kemik yapısı kazanır
+  {const br=mesh(sph(.03,12,8),skin);br.scale.set(2.5,fem?.22:.34,.55);br.position.set(0,.043,.076);face.add(br);
+   const bg=mesh(sph(.008,8,8),skin);bg.scale.set(.75*fp.nw,2.6*fp.nh,1);bg.position.set(0,.012,.091);face.add(bg);
+   const ch=mesh(sph(.025,12,8),skin);ch.scale.set((fem?.8:.9)*fp.jaw,.7,.8);ch.position.set(0,-.096,.066);face.add(ch);
+   }
+  const eyeW=mat('#ece6dc',{roughness:.25}),irisM=irisMat(fp.eye),irisG=geo('iris',()=>new T.SphereGeometry(.0072,20,12).rotateX(PI/2)),pupM=mat('#050505',{roughness:.2}),catchM=mat('#ffffff',{emissive:'#ffffff',emissiveIntensity:1.6,roughness:.1});
   P.pup=[];P.mw=fp.mw;
-  P.eyes=[1,-1].map(s=>{const g=new T.Group();g.position.set(s*.034,.018,.083);g.add(mesh(sph(.0135,12,10),eyeW,false));const ir=mesh(sph(.0072,10,8),irisM,false);ir.position.z=.0105;ir.scale.z=.5;g.add(ir);
+  P.eyes=[1,-1].map(s=>{const g=new T.Group();g.position.set(s*.034,.018,.083);g.add(mesh(sph(.0135,12,10),eyeW,false));const ir=mesh(irisG,irisM,false);ir.position.z=.0105;ir.scale.z=.5;g.add(ir);
     const pu=mesh(sph(.0036,8,6),pupM,false);pu.position.z=.0136;pu.scale.z=.35;g.add(pu);P.pup.push(pu);
     const ct=mesh(sph(.0016,6,5),catchM,false);ct.position.set(.0028,.0028,.0142);g.add(ct);   // gözdeki ışık yansıması
     face.add(g);return g;});

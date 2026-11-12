@@ -1,6 +1,6 @@
 'use strict';
 // Vegas Yolu servis çalışanı: önce ağ (hep güncel sürüm), ağ yoksa önbellek. Oyun çevrimdışı da açılır.
-const AD='vegas-yolu-v9';
+const AD='vegas-yolu-v10';
 const CEKIRDEK=['./','index.html','css/stil.css','lib/three.min.js','js/ek.js','js/sahne.js','js/avatar.js','js/muzik.js','js/oyun.js','js/ekstra.js','js/mit.js','js/mit-ders.js','js/oyunlar.js','js/online-motor.js','js/online.js','js/firebase-ayar.js','js/bulut.js','js/uyari.js','ikon.png','ikon-192.png','ikon-512.png','manifest.webmanifest'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(AD).then(c=>Promise.all(CEKIRDEK.map(u=>c.add(u).catch(()=>{})))).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==AD).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
