@@ -17,19 +17,35 @@ const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.m
 const START_CASH=20000;
 const defSave=()=>({unlocked:1,conquered:[],seen:[],ach:{},cash:START_CASH,rep:{},stats:{hands:0,won:0,best:0,bestCur:'₺'},settings:{speed:'normal',four:false,free:false,sound:true,music:true,musicVol:'normal',body:true,view:'3d',notes:true,follow:true,gfx:MOBILE?'mid':'high',bright:'normal',boardHud:true,talk:true,autoNext:false,ffFold:false}});
 function mergeSave(s){const d=defSave();return Object.assign(d,s,{stats:Object.assign(d.stats,s.stats||{}),settings:Object.assign(d.settings,s.settings||{}),rep:s.rep||{},_old:s.cash==null});}
+/* Kayıt imzası: kayıt her yazılışta bir özetiyle birlikte saklanır. Depolama paneli ya da bulut belgesi elle düzenlenirse özet tutmaz,
+   açılışta kayıt reddedilir (ayarlar kalır, ilerleme sıfırlanır; Google girişi varsa hesaptaki kayıt geri gelir).
+   Not: tamamen tarayıcıda çalışan bir oyunda bu yalnızca engeldir; konsoldan çalışan kod kaydı yeniden imzalayabilir. */
+function imza(raw){let a=0x811c9dc5,b=0xdeadbeef;const t='vy|'+raw+'|yolu';for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677);}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return (4294967296*(2097151&b)+(a>>>0)).toString(36);}
+function yazKayit(){const raw=JSON.stringify(SAVE);localStorage.setItem(STORE,raw);localStorage.setItem(STORE+'.s',imza(raw));}
 function loadSave(){
-  try{const raw=localStorage.getItem(STORE);if(raw)return mergeSave(JSON.parse(raw));}catch(e){}
+  try{
+    const raw=localStorage.getItem(STORE);
+    if(raw){
+      const sg=localStorage.getItem(STORE+'.s');
+      if(sg&&sg!==imza(raw)){
+        const d=defSave();try{Object.assign(d.settings,JSON.parse(raw).settings||{});}catch(e){}
+        d._tamper=1;return d;
+      }
+      return mergeSave(JSON.parse(raw));
+    }
+  }catch(e){}
   return defSave();
 }
 let SAVE=loadSave();
+if(SAVE._tamper){delete SAVE._tamper;setTimeout(()=>{try{toast('Kayıt doğrulanamadı','Cihazdaki kayıt dışarıdan değiştirilmiş görünüyor, ilerleme sıfırlandı. Google ile girdiysen hesabındaki kayıt yüklenir.','info');}catch(e){}},1500);}
 /* Masadaki fiş kayıtta da durur (SAVE.masa, ₺ karşılığı): sayfa yenilenir, sekme kapanır ya da uygulama öldürülürse
    giriş ücreti boşa gitmez; bir sonraki açılışta cüzdana döner. Kalkınca alacağın tutarla aynıdır:
    ortadaki bahis, bitmemiş turnuva ve bitmemiş batak iade edilmez; serbest modda bir şey tutulmaz. */
 function atTable(){try{return !!((G&&!G.settled)||(C&&!C.settled));}catch(e){return false;}}
 function tableStake(){
   try{
-    if(G&&!G.settled&&G.paid){const open=G.venue.tourney&&!G.players.every(p=>p.human||p.out);return open?0:Math.round(toTL(G.players[0].chips,G.venue.cur));}
-    if(C&&!C.settled&&C.paid)return C.t.game==='batak'&&!C.done?0:Math.round(toTL(Math.max(0,C.chips-C.inPlay),C.t.cur));
+    if(G&&!G.settled&&G.paid){const open=G.venue.tourney&&!G.players.every(p=>p.human||p.out);return open?0:Math.max(0,Math.round(toTL(G.players[0].chips,G.venue.cur)-(G.comp||0)));}
+    if(C&&!C.settled&&C.paid)return C.t.game==='batak'&&!C.done?0:Math.max(0,Math.round(toTL(Math.max(0,C.chips-C.inPlay),C.t.cur)-(C.comp||0)));
   }catch(e){}
   return 0;
 }
@@ -40,7 +56,7 @@ function refundTable(){
 {
   const iade=refundTable();
   if(iade>0){
-    try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}
+    try{yazKayit();}catch(e){}
     // açılış uyarıları (+18, KVKK) kapanınca haber ver
     const say=()=>{if(document.querySelector('.uy-ov')){setTimeout(say,800);return;}try{toast('Yarım kalan masa',`Masada bıraktığın ${tl(iade)} cüzdanına döndü. Cüzdan: ${tl(SAVE.cash)}`,'info');}catch(e){}};
     setTimeout(say,1200);
@@ -52,7 +68,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 // İlerleme parmak izi: yalnızca gerçek ilerleme (para, el, ders, avatar…) değişince SAVE.t yenilenir; ayar değişikliği bulutta çakışma sayılmaz.
 const saveFP=()=>{const s=SAVE||{};return [s.stats&&s.stats.hands,Math.round(s.cash||0),Math.round(s.masa||0),(s.conquered||[]).length,(s.seen||[]).length,Object.keys(s.ach||{}).length,s.daily&&s.daily.last,s.weekly&&s.weekly.k,JSON.stringify(s.avatar||0),JSON.stringify(s.lider||0)].join('|');};
 let _fp=saveFP();
-function persist(){SAVE.masa=tableStake();const f=saveFP();if(f!==_fp||!SAVE.t){_fp=f;SAVE.t=Date.now();}try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}if(window.onPersist)window.onPersist();}
+function persist(){SAVE.masa=tableStake();const f=saveFP();if(f!==_fp||!SAVE.t){_fp=f;SAVE.t=Date.now();}try{yazKayit();}catch(e){}if(window.onPersist)window.onPersist();}
 
 /* ================= Ses (Web Audio ile sentezlenir) ================= */
 const SFX=(()=>{
@@ -478,7 +494,7 @@ function renderCareer(){
     const riv=v.rivals.map(([n])=>`<li><b>${n}</b> <span class="muted">${(CHARS[n]||{}).look||''}</span></li>`).join('');
     const feeTxt=`${fee<v.buy?`<s>${fmtM(v.buy,v.cur)}</s> `:''}<b>${fmtM(fee,v.cur)}</b>${foreign?` <span class="muted">≈ ${tl(entryTL(v))}</span>`:''}`;
     const act=USE3D()?(any?`<button class="btn" data-hall="${v.id}">Salona gir →</button>`:`<span class="badge locked">Paran yetmiyor</span><span class="muted" style="font-size:12px">En ucuz masa için ${tl(Math.min(entryTL(v),...sides.map(entryTL))-SAVE.cash)} eksik</span>`):un?`<button class="btn" data-play="${v.id}">${done?'Pokere tekrar otur':'Poker masasına otur'}</button>`:`<span class="badge locked">Paran yetmiyor</span><span class="muted" style="font-size:12px">${tl(entryTL(v)-SAVE.cash)} eksik</span>`;
-    const rep=rl?`<p class="v-rep"><span class="rep-pip r${rl}"></span>Tanınırlık: <b>${R.t}</b> · ${repWins(v)} fetih. ${R.d} Ev sahibi girişte %${Math.round(R.comp*100)} ikram yapıyor.</p>`:'';
+    const rep=rl?`<p class="v-rep"><span class="rep-pip r${rl}"></span>Tanınırlık: <b>${R.t}</b> · ${repWins(v)} fetih. ${R.d} Ev sahibi giriş ücretinin %${Math.round(R.comp*100)}'ini karşılıyor; bu pay masadan kalkarken fişlerinden düşülür.</p>`:'';
     return `<article class="venue ${any?'':'lock'}" data-venue="${v.id}">
       <div class="sw" aria-hidden="true">${v.lvl}</div>
       <div class="v-body">
@@ -630,7 +646,7 @@ function cashOut(){
   const g=G;if(!g||g.settled)return 0;g.settled=true;
   if(!g.paid)return 0;
   const open=g.venue.tourney&&!g.players.every(p=>p.human||p.out);
-  const amt=open?0:toTL(g.players[0].chips,g.venue.cur);
+  const amt=open?0:Math.max(0,toTL(g.players[0].chips,g.venue.cur)-(g.comp||0));   // ev sahibinin ikramı geri alınır
   SAVE.cash+=amt;persist();
   return amt;
 }
@@ -649,6 +665,7 @@ function startGame(venue,opt){
   venue.rivals.forEach(([n,s])=>players.push({name:n,human:false,style:s,prof:STYLES[s],char:CHARS[n]||{}}));
   players.forEach((p,i)=>Object.assign(p,{idx:i,chips:venue.buy,cards:[],bet:0,total:0,folded:false,allIn:false,inHand:false,out:false,show:false,won:0,lastAct:'',actCls:'',tilt:0,notes:[]}));
   G={venue,players,tok:{},dealer:Math.floor(rnd()*players.length),handNo:0,deck:[],board:[],pot:0,curBet:0,minRaise:venue.bb,sb:venue.levels?venue.levels[0][0]:venue.sb,bb:venue.levels?venue.levels[0][1]:venue.bb,ante:venue.ante||0,unit:venue.unit||venue.sb,lvlN:0,streak:0,meRaised:false,nRaises:0,street:0,turn:-1,phase:'idle',winSet:null,hs:{hands:0,raises:0,calls:0},lastAgg:null,resolve:null,reject:null,nextResolve:null,noteSeen:new Set(),paid,rl,settled:false};
+  G.comp=paid?Math.max(0,Math.round(toTL(venue.buy,venue.cur)-entryTL(venue))):0;   // ev sahibinin giriş ikramı: kalkarken fişlerden düşülür
   if(paid)persist();   // masadaki fiş hemen kayda geçsin (ilk el dağıtılmadan yenilenirse giriş yanmasın)
   G.v3=Sahne.ok&&SAVE.settings.view!=='2d';G.fromHall=!!(opt&&opt.fromHall)&&G.v3;
   if(rl)setTimeout(()=>{if(G&&G.venue===venue)toast(`Masa seni tanıdı · ${REP[rl].t}`,REP[rl].d,'info');},1200);
@@ -1497,7 +1514,7 @@ $('#g-leave').onclick=()=>{
   const msg=V.training?'Antrenman masasından kalkıp eğitime dönersin.'
     :!G.paid?'Serbest moddasın; fişler cüzdana geçmez. Masayı fethetmek için hedefe ulaşman gerekir.'
     :open?`Turnuvadan çekilirsen giriş ücreti yanar, hiçbir şey alamazsın.`
-    :`Önündeki ${money(me.chips)}${V.cur!=='₺'?` (≈ ${tl(toTL(me.chips,V.cur))})`:''} nakde dönüp cüzdanına geçer.${onTable} Masayı fethetmek için hedefe ulaşman gerekir.`;
+    :`Önündeki ${money(me.chips)}${V.cur!=='₺'?` (≈ ${tl(toTL(me.chips,V.cur))})`:''} nakde dönüp cüzdanına geçer.${G.comp>0?` Ev sahibinin ikramı (${tl(G.comp)}) bundan düşülür.`:''}${onTable} Masayı fethetmek için hedefe ulaşman gerekir.`;
   openModal(`<h3>Masadan kalk?</h3><p>${msg}</p>
     <div class="row"><button class="btn ghost" id="m-stay">Oynamaya devam</button><button class="btn" id="m-leave">Kalk</button></div>`);
   $('#m-stay').onclick=closeModal;$('#m-leave').onclick=leaveGame;

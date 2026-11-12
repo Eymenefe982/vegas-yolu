@@ -44,10 +44,33 @@ function extraChecks(){
 /* ---------- Günlük hediye ---------- */
 const DAILY=[1500,2000,2500,3000,4000,5000,10000];
 const dailyAmt=n=>Math.round(DAILY[(n-1)%7]*(1+Math.min(4,Math.floor((n-1)/7))*.5));
-function dailyState(){
-  const D=SAVE.daily||{last:'',streak:0},today=dayKey();
+/* Güvenilir saat: web'de sunucunun Date başlığı (cihaz saatini ileri alarak hediye/hafta kazanılamaz).
+   Sunucuya ulaşılamazsa web'de hediye verilmez. Uygulamada (exe/apk) sunucu yok: yerel saat, yalnızca geri alma denetimiyle. */
+const Zaman={
+  web:()=>/^https?:$/.test(location.protocol)&&location.hostname!=='appassets.androidplatform.net',
+  async al(){
+    if(!Zaman.web()){
+      const son=(SAVE.daily&&SAVE.daily.ts)||0;
+      if(Date.now()<son-3e5)return {ok:false,neden:'Cihaz saatin geriye alınmış görünüyor. Saati otomatiğe alıp tekrar dene.'};
+      return {ok:true,t:new Date()};
+    }
+    try{
+      const r=await fetch('sw.js?z='+Date.now(),{method:'HEAD',cache:'no-store'});
+      const d=r.headers.get('date'),t=d?new Date(d):null;
+      if(t&&!isNaN(t)){
+        const g=new Date(t.getTime()+(+r.headers.get('age')||0)*1000);
+        if(Math.abs(g-Date.now())>2*36e5)return {ok:false,neden:'Cihaz saatin yanlış görünüyor. Saati otomatiğe alıp tekrar dene.'};
+        return {ok:true,t:g};
+      }
+    }catch(e){}
+    return {ok:false,neden:'Saati doğrulamak için internet bağlantısı gerekli.'};
+  }
+};
+function dailyState(now){
+  now=now||new Date();
+  const D=SAVE.daily||{last:'',streak:0},today=dayKey(now);
   if(D.last>=today)return {claimed:true,streak:D.streak||1};
-  const streak=D.last===dayKey(addDays(new Date(),-1))?(D.streak||0)+1:1;
+  const streak=D.last===dayKey(addDays(now,-1))?(D.streak||0)+1:1;
   return {claimed:false,streak};
 }
 function renderDaily(){
@@ -66,10 +89,14 @@ function renderDaily(){
   el.classList.toggle('ready',!st.claimed);
   el.innerHTML=`<div class="dl-h"><div><span class="kicker">Günlük hediye</span><b class="dl-t">${st.streak} günlük seri</b></div>${st.claimed?`<span class="muted dl-next">Sıradaki hediye ${hh} sa ${mm} dk sonra</span>`:`<button class="btn" id="daily-claim">Hediyeni al · +${tl(dailyAmt(st.streak))}</button>`}</div><ol class="dl-days">${dots}</ol>`;
   const b=$('#daily-claim');
-  if(b)b.onclick=()=>{
-    const s=dailyState();if(s.claimed)return;
+  if(b)b.onclick=async()=>{
+    b.disabled=true;
+    const z=await Zaman.al();
+    if(!z.ok){toast('Hediye alınamadı',z.neden,'info');b.disabled=false;return;}
+    const s=dailyState(z.t);
+    if(s.claimed){toast('Günlük hediye','Bugünkü hediyeni zaten aldın.','info');renderMenu();return;}
     const amt=dailyAmt(s.streak);
-    SAVE.daily={last:dayKey(),streak:s.streak,total:((SAVE.daily&&SAVE.daily.total)||0)+1};
+    SAVE.daily={last:dayKey(z.t),streak:s.streak,total:((SAVE.daily&&SAVE.daily.total)||0)+1,ts:Date.now()};
     SAVE.cash+=amt;persist();
     try{SFX.play('chips');}catch(e){}
     toast('Günlük hediye',`+${tl(amt)} cüzdanına eklendi. ${s.streak} günlük serin var.${s.streak%7===0?' Haftalık büyük ödülü aldın!':''}`);
@@ -123,7 +150,10 @@ function renderWeekly(){
   // Girebiliyorsan (ya da bu hafta oynadıysan) en üstte; paran yetmiyorsa listenin sonunda: yeni oyuncu önce oturabileceği masayı görsün
   if(!ok&&!played)host.insertAdjacentHTML('beforeend',html);else if(wallet)wallet.insertAdjacentHTML('afterend',html);else host.insertAdjacentHTML('afterbegin',html);
   const b=$('#weekly-go');
-  if(b)b.onclick=()=>{
+  if(b)b.onclick=async()=>{
+    b.disabled=true;
+    const z=await Zaman.al();
+    if(!z.ok){toast('Turnuvaya girilemedi',z.neden,'info');b.disabled=false;return;}
     const wv=weeklyVenue();
     startGame(wv);
     if(G&&G.venue===wv&&G.paid){SAVE.weekly={k:wv.wk,played:true,place:0};persist();Ach.unlock('turnuva');}

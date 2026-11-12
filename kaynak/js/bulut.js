@@ -56,7 +56,7 @@
     refundTable();   // başka cihazda yarım kalmış masanın fişi cüzdana döner (burada masada değilsen)
     delete SAVE._old;
     _fp=saveFP();
-    try{localStorage.setItem(STORE,JSON.stringify(SAVE));}catch(e){}
+    try{yazKayit();}catch(e){}
     setSync(SAVE.t);
     if(CUR==='scr-menu')renderMenu();else if(CUR==='scr-career')renderCareer();
   }

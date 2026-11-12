@@ -62,6 +62,7 @@ function startSide(t,opt={}){
   }
   if(paid){SAVE.cash-=entryTL(t);persist();}
   C={t,chips:t.game==='batak'?0:t.buy,paid,rl:repLvl(t),settled:false,done:false,tok:{},inPlay:0,busy:false,chip:t.min,bet:{},hist:[],last:null,rounds:0,v3:USE3D(),fromHall:!!opt.fromHall,bots:sideBots(t)};
+  C.comp=paid&&t.game!=='batak'?Math.max(0,Math.round(toTL(t.buy,t.cur)-entryTL(t))):0;   // ev sahibinin giriş ikramı: kalkarken fişlerden düşülür
   if(paid)persist();   // masadaki fiş kayda geçsin: sayfa yenilenirse cüzdana döner
   const sc=$('#scr-casino');sc.dataset.venue=t.V.id;sc.dataset.game=t.game;
   $('#c-name').textContent=`${t.name} · ${t.V.name}`;
@@ -98,7 +99,7 @@ const cmsg=html=>{$('#c-msg').innerHTML=html;};
 function sideCashOut(){
   const c=C;if(!c||c.settled)return 0;c.settled=true;
   if(!c.paid)return 0;
-  const amt=c.t.game==='batak'&&!c.done?0:toTL(Math.max(0,c.chips-c.inPlay),c.t.cur);
+  const amt=c.t.game==='batak'&&!c.done?0:Math.max(0,toTL(Math.max(0,c.chips-c.inPlay),c.t.cur)-(c.comp||0));
   SAVE.cash+=amt;persist();
   return amt;
 }
